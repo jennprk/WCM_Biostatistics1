@@ -1,0 +1,300 @@
+---
+title: "Homework 3"
+author: "Ji-Eun(Jenn) Park"
+date: "10/9/2017"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warnings = 'hide')
+```
+
+#### Setup
+```{r Setup,echo= TRUE, message = FALSE, warning = FALSE}
+library(Ecdat)
+library(tidyverse)
+```
+
+```{r, inlcude = FALSE}
+?Cigarette
+head(Cigarette,5)
+```
+
+
+### Question 1
+#### Part A
+##### Provide a summary of the average number of packs of cigarettes consumed per state. In the period of the study, which state had the highest cigarette consumption? Which state had the lowest?
+```{r Question1PartA, echo=TRUE, include = TRUE}
+bystate <- Cigarette %>%
+             group_by(state) %>%
+             select(state, packpc) %>%
+             summarise(mean = mean(packpc))%>%
+             arrange(desc(mean))
+bystate
+
+a <- bystate %>%
+  head(.,1)
+a
+
+b <- bystate %>%
+  tail(.,1)
+b
+
+bystate$state <- factor(bystate$state, levels = bystate$state[order(bystate$mean)])
+
+
+
+ggplot(bystate,aes(x=state,y=mean,fill=state))  +
+  geom_bar(stat="identity") +
+  labs(x="States", y="Avg # of consumed cigarette packs", title = "Average number of consumed cigarette packs by state") +
+  coord_flip() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+
+##### The state with the highest cigarette consumption is Kentucky which consumes around 174 packs per year and the smallest is Utah which consumes around 57 packs.
+
+
+
+
+#### Part B
+##### Provide a summary of the average number of packs of cigarettes consumed per year. Describe the trend that you observe.
+```{r Question1PartB,echo=TRUE, include = TRUE}
+byyear <- Cigarette %>%
+       group_by(year) %>%
+       select(year,packpc) %>%
+       summarise(mean = mean(packpc))%>%
+       arrange(year)
+
+byyear
+
+ggplot(byyear,aes(x=year,y=mean,fill = mean)) +
+  geom_bar(stat="identity") +
+  geom_line(aes(color="red")) + 
+  labs(x="Year", y="Avg # of consumed cigarette packs", title = "Average number of consumed cigarette packs by year")
+```
+
+##### The average number of consumed cigerette packs has gradually declined from around 120 packs in 1985 to around 95 in 1994. It also shows a slight increase again around 1994 until 1995.
+
+
+
+#### Part C
+##### Is there a relation between the number of packs per capita and the average price? Does this relation depend on the year? Does it depend on the state?
+```{r Question1PartC,echo=TRUE, include = TRUE}
+c <- round(cor(Cigarette$packpc,Cigarette$avgprs),4)
+c
+
+Corner_text <- function(text, location="topright"){
+legend(location,legend=text, bty ="n", pch=NA) 
+}
+
+plot(Cigarette$packpc,Cigarette$avgprs,main = "Relationship between 'Packs Per Capita' and 'Average Price'", xlab = "pack per pc", ylab = "average price", type = "p") 
+Corner_text(c("cor=",c),"topright")
+
+
+
+withyear <- Cigarette%>%
+             select(year,packpc,avgprs)
+
+all_states = unique(Cigarette$state)
+
+withstate1 <- Cigarette%>%
+              select(state,packpc,avgprs)%>%
+              filter(state %in% all_states[1:12])
+
+withstate2 <- Cigarette%>%
+              select(state,packpc,avgprs)%>%
+              filter(state %in% all_states[11:24])
+
+withstate3 <- Cigarette%>%
+              select(state,packpc,avgprs)%>%
+              filter(state %in% all_states[25:35])
+
+withstate4 <- Cigarette%>%
+              select(state,packpc,avgprs)%>%
+              filter(state %in% all_states[36:48])
+
+ggplot(withyear,aes(x = avgprs,y=packpc,color=year)) +
+  geom_smooth() +
+  labs(x="Average Price", y="packs per capita", title = "Relationship between 'Packs Per Capita' and 'Average Price' by year") +
+  facet_wrap(~year, nrow = 3)
+
+ggplot(withstate1,aes(x = avgprs,y = packpc,color = state)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  labs(x="Average Price", y="packs per capita", title = "Relationship between 'Packs Per Capita' and 'Average Price' by ystate (group1/4)") +
+  facet_wrap(~state, nrow = 3)
+
+ggplot(withstate2,aes(x = avgprs,y = packpc,color = state)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Average Price", y="packs per capita", title = "Relationship between 'Packs Per Capita' and 'Average Price' by ystate (group2/4)") +
+  facet_wrap(~state, nrow = 3)
+
+ggplot(withstate3,aes(x = avgprs,y = packpc,color = state)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Average Price", y="packs per capita", title = "Relationship between 'Packs Per Capita' and 'Average Price' by ystate (group3/4)") +
+  facet_wrap(~state, nrow = 3)
+
+ggplot(withstate4,aes(x = avgprs,y = packpc,color = state)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x="Average Price", y="packs per capita", title = "Relationship between 'Packs Per Capita' and 'Average Price' by ystate (group4/4)") +
+  facet_wrap(~state, nrow = 3)
+```
+
+##### As we can see in the plots, the relationship of average price and packs per capita has a weak but negative correlation of -0.5854. By plotting the relationship of the average price and number of packs per capita by year and state, we can see that the relationship does not depend on both year and state as most years and states have a similar negative correlation. 
+
+##### Another thing we can see in the plots by years is that the range is moving to the right every year, which means that the consumption of cigarettes is gradually increasing over time. One other interesting fact is that many plots by years have a S shaped line, which indicates that if the price of the cigarette is higher than some point, people tend to consume more until it gets too expensive.
+
+##### In the plots by state, we can see Kentucky, which is the state with the most average consumption of cigarettes has a relatively low cost of cigarettes and high consumption. At first glance, we might assume that the low price might be the cause of high consumption. However, as Indiana(IN), Missouri(MO), Wyoming(WY),West Virginia(WV) etc. also have lower price range, we can see that our assumption is wrong.
+
+
+
+
+### Question 2
+#### Part A
+##### Provide an estimate of the mean of the per capita consumption of cigarettes in the population
+```{r Question2PartA,echo=TRUE, include = TRUE}
+muhat_pack <- mean(Cigarette$packpc)
+muhat_pack
+```
+##### The mean of the per capita consumption of cigarettes estimated with the sample packpc is 106.455, or about 107 packs.
+
+
+#### Part B
+##### Provide an estimate of the variance of the per capita consuption of cigarettes in the population.
+```{r Question2PartB, echo=TRUE, include = TRUE}
+var_pack = var(Cigarette$packpc)
+var_pack
+```
+##### The variance of the per capita consumption of cigarettes estimated with the sample packpc is 534.7299. 
+
+
+#### Part C
+##### Provide a graphical estimate of the empirical distribution of packpc and show that the assumption that it is distributed as a Gaussian r.v. is reasonable (but not perfect!).
+```{r Question2PartC, echo=TRUE, include = TRUE}
+ggplot(Cigarette,aes(x = packpc)) +
+  geom_density() +
+  labs(title = "Distribution of Pack Per Capita")
+
+isSymmetric(as.matrix(Cigarette$packpc))
+```
+
+##### We can assume that the muhat is distributed as a Gaussian random variable as it has an almost symmetric bell shaped distribution. However, we can see that it is not perfectly symmetric by observing the plot as it seems to be right skewed than symmetric. Also, we can test whether the distribution is symmetric or not with the function isSymmetric(). Here we get a FALSE, which means the distribution of packs per capita is not symmetric as a perfect Gaussian RV should be like.
+
+
+
+### Question3
+#### Assume that the variable packpc is distributed as a N(µ, σ^2). Assume that we know that σ^2 = 500 and that we do not know µ.
+
+#### Part A
+##### Write down the distribution of the estimator of the mean (equation).
+```{r}
+dat <- Cigarette$packpc
+```
+##### The distribution equation of the estimator of the mean is muhat ~ N(µ,σ^2/n) where σ^2=500 and n=length(dat).
+
+
+#### Part B
+##### What is the maximum likelihood estimate of µ?
+```{r Question3PartA, echo=TRUE, include = TRUE}
+# the muhat is calculate with mean of dat
+muhat2 <- 1/length(dat)*sum(dat)
+muhat2
+```
+##### The formula for the maximum likelihood estimate of µ equals the mean of the sample.
+##### The maximum likelihood estimate of µ is 106.455.
+
+#### Part C
+##### Provide a 90% conﬁdence interval for µ.
+```{r}
+sigmahat <- sqrt(500/length(dat))
+lower_90 <- qnorm(0.05,mean = muhat2,sd=sigmahat)
+upper_90 <- qnorm(0.95,mean = muhat2,sd=sigmahat)
+print(paste0("90% Confidence Interval for the mean of packpc = [", round(lower_90,4), ",",  round(upper_90,4), "]"))
+```
+
+
+#### Part D
+##### Write one sentence to interpret the conﬁdence interval just obtained.
+##### Our estimate of the population mean is 106.455. We are 90% confident that the true mean is between 104.8543 and 108.0556.
+
+
+#### Part E
+##### What would the confidence interval change if we had n = 1000 observations instead of the n = 528?
+```{r}
+sigmahat_2 <- sqrt(500/1000)
+
+lower_n1000 <- qnorm(0.05,mean = muhat2,sd=sigmahat_2)
+upper_n1000 <- qnorm(0.95,mean = muhat2,sd=sigmahat_2)
+
+print(paste0("90% Confidence Interval for the mean of packpc when n is 1000 = [", round(lower_n1000,4), ",",  round(upper_n1000,4), "]"))
+```
+##### If the number of observation changes from 528 to 1000, we are 90% confident that the true mean is between 105.2919 and 107.6181. We can see that as the number of observation increases, the range of the confidence interval decreases.
+
+
+#### Part F
+##### Provide a 99% confidence interval for µ. Is this larger or smaller than the 90% confidence interval? Explain why.
+```{r}
+# Back to n=528
+lower_99 <- qnorm(0.005,mean = muhat2,sd=sigmahat)
+upper_99 <- qnorm(0.995,mean = muhat2,sd=sigmahat)
+
+print(paste0("99% Confidence Interval for the mean of packpc = [", round(lower_99,4), ",",  round(upper_99,4), "]"))
+```
+##### We are 99% confident that the true mean is between 103.9484 and 108.9616. The 99% confidence interval is larger than that of 90% confidence interval. The reason is that when we have a smaller confidence level, we have a less chance of error because we do not need to be confident about our estimation as much as the bigger confidence level. Hence, we estimate that the true mean is in a smaller interval. On the other hand, when we have a bigger confidence level, we have a bigger chance of error because we need to be more confident about our estimation than the smaller one. Hence, we estimate that the true mean is in a bigger interval.
+
+
+### Question 4
+#### Get the list of pack per capita in 1985 and 1995.
+```{r}
+Cigarette_1985 <- Cigarette%>%
+                   filter(year == 1985)%>%
+                   pull(packpc)
+
+Cigarette_1995 <- Cigarette%>%
+                   filter(year == 1995)%>%
+                   pull(packpc)
+```
+
+
+#### Part A
+###### Provide a 95% confidence interval for the mean of packpc in both datasets.
+```{r}
+muhat_1985 <- mean(Cigarette_1985)
+muhat_1995 <- mean(Cigarette_1995)
+sigmahat_1985 <- sqrt(500/length(Cigarette_1985))
+sigmahat_1995 <- sqrt(500/length(Cigarette_1995))
+
+
+lower_1985 <- qnorm(0.025,mean = muhat_1985,sd=sigmahat_1985)
+upper_1985 <- qnorm(0.975,mean = muhat_1985,sd=sigmahat_1985)
+
+lower_1995 <- qnorm(0.025,mean = muhat_1995,sd=sigmahat_1995)
+upper_1995 <- qnorm(0.975,mean = muhat_1995,sd=sigmahat_1995)
+
+
+print(paste0("Confidence Interval for the mean of packpc in 1985 = [", round(lower_1985,4), ",",  round(upper_1985,4), "]"))
+
+print(paste0("Confidence Interval for the mean of packpc in 1995 = [", round(lower_1995,4), ",",  round(upper_1995,4), "]"))
+
+```
+
+#### Part B
+##### Do the intervals overlap? What can we conclude from this?
+
+##### It does not overlap. We can conclude that the average number of packs per capita of 1985 and 1995 are significantly different and it has decreased over the 10 years.
+
+
+
+
+
+
+
+
+
