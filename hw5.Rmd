@@ -1,0 +1,50 @@
+---
+title: "Homework 5"
+author: "Ji-Eun(Jenn) Park"
+date: "11/4/2017"
+output:
+  pdf_document:
+    fig_height: 4.5
+    fig_width: 4.5
+---
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, error=FALSE, message=TRUE, warning=TRUE,eval=TRUE,echo=TRUE,fig.pos='H',tidy=TRUE, tidy.opts=list(width.cutoff=60))
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+theme_set(theme_bw())
+```
+
+```{r cars}
+summary(cars)
+```
+
+Question3
+```{r setupdata, echo=FALSE}
+setwd('~/Desktop/Biostatistics/HW')
+dat <- read.csv('plco_dat_n25.csv')
+```
+• Part A: Is PSA at year 0 diﬀerent in men over 65 vs less than or equal to 65?
+```{r}
+dat %>%
+  filter(age>65) %>%
+  select(psa_level0) -> psa0_over
+
+dat%>%
+  filter(age<=65) %>%
+  select(psa_level0) -> psa0_le
+  
+psa0_over <- as.numeric(psa0_over)
+
+mean(psa0_over,na.rm=TRUE)
+mean(table(psa0_le))
+```
+
+• Part B: Estimate the proportion of men with an abnormal DRE at year 0 (suspicious or not) among old and young men (including conﬁdence intervals). What can we conclude? Consult the data dictionary for the code associated with a suspicious DRE, and be sure to remove patients that are missing DRE screening that year.
+
+• Part C: On average, is there a change in PSA from year 1 to year 2?
+
+• Bonus: On average, is the change from year 0 to year 1 diﬀerent from the change from year 1 to year 2?
+
+Add a plot to graphically show the data, and be sure to state the number of patients being used for this test.
