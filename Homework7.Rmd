@@ -1,0 +1,130 @@
+---
+title: "Homework7"
+author: "Ji-Eun(Jenn) Park"
+date: "11/22/2017"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, message=TRUE, warning=FALSE,eval=TRUE,echo=TRUE,fig.pos='H',tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+This homework on linear regression is adapted from problem 1.25 from the textbook Applied Linear Statistical Models by Kutner, Nachtsheim, Neter, and Li.
+
+Airfreight breakage A substance used in biological and medical research is shipped by air-freight to users in cartons of 1,000 ampules. The data below, involving 10 shipments, were collected on the number of times the carton was transferred from one aircraft to another over the shipment route (X) and the number of ampules found to be broken upon arrival (Y ). Assume that simple linear regression model is appropriate.
+
+```{r datasetup, echo=FALSE}
+X <- c(1,0,2,0,3,1,0,1,2,0)
+Y <- c(16,9,17,12,22,13,8,15,19,11)
+```
+
+
+
+
+
+
+1. Obtain the estimated regression function. Plot the estimated regression function and the data. Does a linear regression function appear to give a good ﬁt here?
+```{r q1, echo=FALSE, fig.width=7, fig.height=5}
+(fit <- lm(Y~X))
+a <- fit$coefficients[1]
+b <- fit$coefficients[2]
+
+plot(Y~X, main = "Estimated regression with all data point included", xlab = "# of times the carton was transferred(X)", ylab = "# of ampules broken upon arrival(Y)", pch = 1)
+abline(a = a, b = b, col = "red", lwd = 2)
+legend("topleft","Regression Line", lwd = 2, col = 2:1)
+
+fitted_Y <- a + b*X 
+avg_Y <- mean(Y)
+
+R2 <- sum((fitted_Y - avg_Y)^2) / sum((Y - avg_Y)^2)
+R2
+```
+By using the linear model, we can estimate that the regression function is (Yhat = 10.2 + 4.0X).
+We can check the that the linear regression line is a good fit from seeing the plot as the points are mostly aligned with the regression line, but we can also see that it has a high R-squared which is 0.90, which proves that the model is doing a good job in explaining Y(the number of ampules broken upon arrival) with X(the number of times the carton was transferred).
+
+
+
+
+
+
+2. Obtain a point estimate of the expected number of broken ampules when x = 1 transfer is made.
+```{r q2, echo=FALSE}
+yhat <- function(x) a + b*x
+yhat(1)
+```
+By simply puting x=1 in the estimated linear function, we can estimate the expected number of broken ampules when x = 1 transfer is made which is 14.2 ampules. 
+
+
+
+
+
+
+
+3. Estimate the increase in the expected number of ampules broken when there are 2 transfers as compared to 1 transfer.
+```{r q3, echo=FALSE}
+yhat <- function(x) a + b*x
+yhat(2) - yhat(1)
+```
+By using the linear model, we can estimate that when the transfer increases from 1 to 2, the expected number of ampules broken increases by 4 ampules.  
+
+
+
+
+
+
+
+4. Verify that your ﬁtted regression line goes through the point (xbar,ybar).
+```{r q4, echo=FALSE, fig.width=7, fig.height=5}
+(avg_X = mean(X))
+(avg_Y = mean(Y))
+
+round(as.numeric(yhat(avg_X)),1) == round(avg_Y,1)
+
+plot(Y~X,main = "Estimated regression with all data point included", xlab = "# of times the carton was transferred", ylab = "# of ampules broken upon arrival")
+abline(a = a, b = b, col= "red", lwd=2)
+points(x = avg_X, y = round(avg_Y,1), type = "p", pch = 15, col = "Blue")
+legend("topleft","Regression Line", lwd=2, col=2:1)
+
+```
+The xbar and ybar equals to the mean of X and mean of Y. In order to verify, we can calculate the mean of X and put in in the x of the estimated linear model function. Then we get the value of 14.2 which is equal to the ybar or mean of Y. Therefore, we can see that the fitted regression line goes through the point (xbar,ybar).
+
+
+
+
+
+
+
+5. Verify that the sum of the residuals is zero
+```{r q5, echo=FALSE}
+(resd = Y - yhat(X))
+sum(resd)
+round(sum(resd))
+```
+The residual is the difference of the fitted value of Y for each X and the real value of Y. As we can see, the sum of the residuals is  2.309264e-14 which equals to zero if rounded. Hence, we can conclude that the sum of the residuals is zero.
+
+## Appendix
+### Question data setup code
+```{r appendix00, ref.label='datasetup', eval= FALSE}
+```
+
+### Question 1 code
+```{r appendix01, ref.label='q1', eval= FALSE}
+```
+
+### Question 2 code
+```{r appendix1, ref.label='q2', eval = FALSE}
+```
+
+### Question 3 code
+```{r appendix2, ref.label='q3', eval = FALSE}
+```
+
+### Question 4 code
+```{r appendix3, ref.label='q4', eval = FALSE}
+```
+
+### Question 5 code
+```{r appendix4, ref.label='q5', eval = FALSE}
+```
