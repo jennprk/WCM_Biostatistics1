@@ -1,0 +1,463 @@
+---
+title: "Final Project"
+author: "Ji-Eun(Jenn) Park, Lewis Cheserough, Cassie Xu"
+date: "11/29/2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r install, include=FALSE}
+library(zipcode)
+library(grid)
+library(gridExtra)
+library(gtable)
+library(stringr)
+library(ggplot2)
+library(zipcode)
+library(tidyverse)
+library(gridExtra)
+library(grid)
+library(gtable)
+library(stringr)
+library(forcats)
+library(dplyr)
+```
+
+
+
+```{r clean, echo=FALSE, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+prj <- read.csv(url("https://data.cityofnewyork.us/api/views/43nn-pn8j/rows.csv?accessType=DOWNLOAD"))
+prj = mutate(prj, INSPECTION.DATE = as.Date(INSPECTION.DATE, "%m/%d/%Y")) %>%
+  mutate(., GRADE.DATE = as.Date(GRADE.DATE, "%m/%d/%Y")) %>%
+  mutate(., RECORD.DATE = as.Date(RECORD.DATE, "%m/%d/%Y")) %>% 
+  mutate(., PHONE = as.double(PHONE)) %>% # Numerize the phone number
+  mutate(., ZIPCODE = clean.zipcodes(ZIPCODE)) %>% #Turn zip to string with clean format
+  mutate(ACTION = fct_recode(as.character(ACTION), # Simplify the Action variable
+                             "Violation" = "Violations were cited in the following area(s).",
+                             "No Violation" = "No violations were recorded at the time of this inspection.",
+                             "Re-opened" = "Establishment re-opened by DOHMH",
+                             "Re-closed" = "Establishment re-closed by DOHMH",
+                             "Closed" = "Establishment Closed by DOHMH.  Violations were cited in the following area(s) and those requiring immediate action were addressed.")) %>%
+  mutate(.,CUISINE.DESCRIPTION = as.character(CUISINE.DESCRIPTION)) %>%
+  filter(ACTION != "") %>% # Eliminate missing actions
+  filter(BORO != "Missing") %>% #Eliminate if borough is missing
+  filter(INSPECTION.DATE > '1900-01-01') %>% # WAS NOT INSPECTED
+  filter(!is.na(SCORE)) %>% #Eliminate rows without a score; corresponds to inspection types that don't lead to scores (Admin, Smoke, Calorie)
+  filter(SCORE >= 0) %>% #Eliminate negative scores
+  filter(CRITICAL.FLAG != 'Not Applicable')#Eliminate rows with a negative score which shouldn't occur based on scoring process
+```
+
+#Intro
+This report investigates the results of restaurant inspections across the five boroughs of New York City. The DOHMH New York City Restaurant Inspection Results data, provided through NYC OpenData, shows the outcomes of all restaurant inspections conducted by the Department of Health and Mental Hygiene (DOHMH), from August 1, 2014 to the present day.
+
+We will answer the following questions:
+
+1. Which restaurant had the most inspections?
+2. Which restaurant had the most violations?
+3. What are the most used words in the violation descriptions?
+
+These questions are answered by manipulating the data using dplyr in R.
+
+We will test the following hypotheses:
+
+1. There is a difference in the rate of critical violations per inspection between the boroughs.
+2. There is an association between a restaurant’s Grade and the number of violations cited for that restaurant.
+3. There is a difference in the number of violations in the Summer and Winter.
+
+For Hypothesis 1 we calculate the average rate of critical violations per inspection for each of the boroughs, then run a logistic regression model, with Manhattan as the baseline borough. The output of this regression model will tell us whether or not there is a statistically significant (alpha=0.05) difference in the odds ratio of a critical violation occurring between the boroughs.
+
+For hypothesis 2, we create a linear model testing if there is a statistically significant linear association between a restaurant’s grade and the number of violations that have been cited for that restaurant. We consider the response variable to be the restaurant’s grade, and the explanatory variable the number of violations cited.
+
+For hypothesis 3, we calculate the number of violations that took place in each year of the data sets availability, 2014-2017, for winter and summer. We then perform a t-test to determine whether or not there is a statistically significant difference between the number of violations between the winter and summer seasons across the 4 year period.
+
+For hypothesis 4, we calculate the average number of inspections per Ethnic restaurant and compare it to the average number of inspections per “American” restaurant. Ethnic restaurants are defined as restaurants whose cuisine description is included in the following subset: Caribbean, Latin, Mexican, Chinese, African, Indian. We perform a t test.
+
+#Results
+
+The following table provides a description of each variable in the data set. There are 18 variables total.
+
+Variable Name | Description | Data Type | Possible Values
+----------| ------------------------------- | ---------| ------------------------------
+CAMIS | Unique  restaurant identifier | Categorical | Unique 8 digit number, there are `r length(unique(prj$CAMIS))` unique IDs
+DBA | Name of restaurant (Doing Business As) | Categorical | Strings of varying length e.g. "NY Pizza"
+BORO | Borough restaurant is located in | Categorical | Each of the five boroughs
+BUILDING | Number of the street address of restaurant | Categorical | Street address numbers
+STREET | Name of street where restaurant is located | Categorical | Street names of New York
+ZIPCODE | Zipcode of restaurant's location | Categorical | 5 digit zipcode
+PHONE | Restaurant's phone number | Categorical | 10 digit phone number
+CUISINE DESCRIPTION | Describes restaurant's cuisine | Categorical | 85 unique categories e.g. "Chinese"
+INSPECTION DATE | Date of given inspection of given restaurant | Ordinal | Dates from 2013-2017 in month/day/year format
+ACTION | Action taken by DOH associated with given inspection | Categorical | 5 unique actions or missing, e.g. "Closed"
+VIOLATION CODE | Unique code for cited violation | Categorical | 100 unique values for different types violations
+VIOLATION DESCRIPTION | Description of cited violations | Categorical | Textual Description of violation
+CRITICAL FLAG | Whether or not flagged as critical violation | Categorical Binary | Critical or Not Critical
+SCORE | Total score based on restaurant inspection | Ordinal | Higher score is worse, range from 0 to 151, determines grade
+GRADE  | Letter grade based on given inspection | Ordinal | A, B, C, Pending, Not yet graded
+GRADE DATE | Date that grade was issued | Ordinal | Dates from 2013-2017 in month/day/year format
+INSPECTION TYPE |  Inspection program and inspection type | Categorial | 35 unique inspection categories
+---
+
+For our analysis, we filtered the full data set to make sure that we only include actual inspections, only included inspections in which an action was taken, and eliminated rows with missing values for borough, grade, score or critical flag. Prior to filtering, there are 397495 rows and after filtering this number is reduced to 373068 rows.
+
+##Exploratory data analysis
+
+The following univariate and bivariate plots provide a glimpse of variable distributions, frequencies and relationships.
+
+This table shows the number of unique restaurants per borough, Manhattan has by far the most with over 10,000 food establishments.
+
+```{r , echo=FALSE, fig.height = 3, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+#number of restaurants per borough
+prj %>%
+  group_by(BORO) %>%
+  summarise(Unique = n_distinct(CAMIS)) %>%
+  ggplot(aes(x=BORO, y=Unique))+ geom_bar(stat="identity", fill="orange") + 
+  labs(title="Number of Restaurants in Each NYC Borough", x="Borough", y="Count")
+```
+
+The following shoes the density of inspection score for each borough, overlaid on one plot. There is a lot of overlap showing the distribution is fairly stable between boroughs, the most frequent score appears to be around 10 for all of the boroughs, however the average score is `r mean(prj$SCORE)` across all boroughs. The distribution for all boroughs is right-skewed, since the mean is to the right of the mode.
+
+```{r , echo=FALSE, fig.height = 3, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+# density of scores same for all boros?
+
+prj %>%
+  ggplot(aes(SCORE,color=BORO) + geom_density(alpha=0.1) + labs(main="Density of inspection scores by Borough"))
+
+#density of scores same for all boros?
+prj %>%
+  ggplot(aes(SCORE, fill=BORO)) + geom_density(alpha=0.5) + labs(main="Density of inspection scores by Borough") + facet_wrap(~BORO)
+```
+
+
+I calculate the three cuisine types with the lowest and highest average scores, and found that the three highest are: Creole, Filipino and Pakistani; while the three lowest are: Hotdogs/Pretzels, Donuts and Soups & Sandwiches. This seems to make sense as the cuisines with the lowest scores on average sound like simpler operations than a full restaurant kitchen. The score distributions are plotted below which show differences - the cuisines with higher average scores tend to have a more spread out distribution.
+
+```{r , echo=FALSE, fig.height = 3, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+#lowest average scores + 3 highest overlapping densities
+prj %>%
+  filter(CUISINE.DESCRIPTION == c("Hotdogs/Pretzels", "Donuts", "Soups & Sandwiches", "Creole", "Filipino", "Pakistani")) %>%
+  group_by(CUISINE.DESCRIPTION) %>%
+  ggplot(aes(SCORE, fill=CUISINE.DESCRIPTION)) + geom_density() + facet_wrap(~CUISINE.DESCRIPTION, nrow=2) + guides(fill=FALSE) + labs(main="Distribution of Score For Top 3 and Bottom 3 Cuisines by Average Score", x="Score")
+```
+
+To get a glimpse at whether or not scores change depending on time of year, the scores are plotted by date for the full year 2016 below, with a smoothed trendline added in. The trend stays fairly constant but looks like it goes up slightly in summer time. This will be further investigated later in the report.
+
+```{r , echo=FALSE, fig.height = 3, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+
+#overall scores throughout the year 2016
+prj %>%
+  subset(., format.Date(INSPECTION.DATE, "%y") == c("16"))%>%
+  ggplot(aes(x=INSPECTION.DATE, y=SCORE)) + geom_point() + geom_smooth() + labs(main="Scores Over 2016 With Trend Line", x="Month", y="Score")
+```
+
+Taking the last plot a bit further, the scores throughout the year are plotted below with a trend line for each borough. The grey shade around the trend line represents the interquartile range. This shows variation between boroughs. For instance Staten Islands scores peak in February/March, and then takes a big dip in July - but Brooklyn peaks in August and has a big dip in April-May.
+
+```{r , echo=FALSE, fig.height = 3, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+
+#scores throughout the year by boro 2016
+prj %>%
+  subset(., format.Date(INSPECTION.DATE, "%y") == c("16"))%>%
+  ggplot(aes(x=INSPECTION.DATE, y=SCORE, color=BORO)) + geom_smooth() + labs(main="Scores Over 2016 Trend by Borough", x="Month", y="Score")
+```
+
+Below I summarize the most common violation codes for each cuisine type and for each borough. For the five boroughs, the most common violation across the board is 10F, the description of which is "Non-food contact surface improperly constructed...". In cuisine types with at least 2000 inspections, this is also the most common violation in 32/33 cases, however 08A is the most frequent for Caribbean restaurants which is "Facility not vermin proof."
+
+```{r , echo=FALSE}
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+#most common violation per cuisine type
+prj %>%
+  group_by(CUISINE.DESCRIPTION) %>%
+  filter(n() > 2000) %>%
+  summarize(Mode(VIOLATION.CODE))
+
+prj %>%
+  group_by(BORO) %>%
+  summarize(Mode(VIOLATION.CODE))
+```
+
+#Focused Analysis
+## Question 1
+
+*Is there a difference in the rate of critical violation per inspection between the New York City boroughs?
+
+To approach this question, we first provide a histogram to visualize the difference in rates of critical violations between the boroughs. The plot shows some slight variation in proportion of critical violations, but they are all pretty close around ~40%.
+
+We then calculate the proportion of critical violations per inspection for each of the five boroughs, and run a logistic regression testing the correlation between borough and proportion of critical violations, using Manhattan as the reference level for the five boroughs. We are testing whether or not there is a difference in rates of critical violations at $\alpha = 0.05$. We report the difference in odds which is calculated by taking the result of e raised to the coefficient estimate for the given borough. We also report whether or not the result is statistically significant.
+
+The summary of the model shows that there were 217,570 critical violations cited and 153,911 non-critical violations cited. It's interesting that there are a lot more violations flagged as critical than not, and also virtually every single inspection results in at least one violation.
+
+The results of the logistic regression for each of the four other boroughs, relative to Manhattan are as follows:
+
+In the Bronx, the odds of a restaurant having a critical violation in a given inspection is 4.52% lower than in Manhattan (p<0.05).
+
+In Brooklyn, the odds of a restaurant having a critical violation in a given inspection is 3.49% lower than in Manhattan (p<0.05).
+
+In Queens, the result is not statistically significant so we cannot conclude that there is a difference between the rate of critical violations in Queens and Manhattan, however the estimate is that a restaurant in Queens is 1.7% more likely to have a critical violation.
+
+In Staten Island, the odds of a restaurant having a critical violation in a given inspection is 5.34% greater than in Manhattan (p<0.05).
+
+So from these results, we can conclude that Staten Island is the only borough that has a statistically significant higher rate of critical violations than  Manhattan. Brooklyn and the Bronx have statistically significant lower rates of critical violations than Manhattan. Because the result was not statistically significant for Queens, we cannot conclude that there is a difference between the two boroughs.
+
+```{r q1, echo = FALSE, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE, results='hide', fig.keep='all'}
+ggplot(data=prj, aes(x=BORO)) +
+  geom_bar(aes(fill=CRITICAL.FLAG), position='fill') +
+  theme_bw()+
+  xlab("Boroughs") +
+  ylab("Count") +
+  ggtitle("Histogram of Critical Flags of Boroughs in NYC")
+  
+
+prj$CRITICAL.FLAG <- droplevels(prj$CRITICAL.FLAG)
+table(prj$CRITICAL.FLAG)
+
+prj1 <- within(prj, BORO <- relevel(BORO, ref = 3))
+
+model <- glm(CRITICAL.FLAG ~ factor(BORO),family=binomial(link='logit'), data=prj1)
+summary(model)
+exp(model$coefficients)
+exp(confint.default(model))
+```
+
+
+###Most and least inspections and violations
+
+Next, we investigate the following questions investigating specific restaurants with most inspections and violations in 2017, and the restaurants with the least violations in 2017. Specifically, we ask:
+
+*What was the restaurant with the most inspections in 2017? 
+
+*What was the restaurant with the most violations in 2017? 
+
+*What restaurant had the least violations in 2017?
+
+We begin by further filtering the data, to ensure that each row we are counting is in fact an inspection, as there are other types of entries in the dataset. In the filtered dataset, each row would count as an individual inspection, so we count the rows for each restaurant and rank them.
+
+```{r q2, include=FALSE}
+(prj_2_2017_inspect <- prj %>%
+    subset(., format.Date(INSPECTION.DATE, "%y") == c("17"))%>%
+    group_by(CAMIS) %>%
+    distinct(INSPECTION.DATE) %>%
+    count(CAMIS) %>%
+    arrange(desc(n)) %>%
+    head(.,10) %>%
+    select(CAMIS) %>%
+    as.matrix() %>%
+    as.vector())
+
+# most inspections in 2017
+(prj_2_2017_inspection_most <- prj %>%
+    filter(CAMIS %in% prj_2_2017_inspect) %>%
+    select(DBA,BORO,CUISINE.DESCRIPTION) %>%
+    unique(.))
+
+colnames(prj_2_2017_inspection_most) <- c('Name','Borough','Cuisine')
+prj_2_2017_inspection_most[8,3] = 'Latin'
+
+
+# most violations in 2017
+
+prj_2_2017_violation <- prj %>%
+  subset(., format.Date(INSPECTION.DATE, "%y") == c("17"))%>%
+  filter(ACTION == 'Violation') %>%
+  arrange(CAMIS) %>%
+  group_by(CAMIS)
+
+(prj_2_2017_violation_most <- prj %>%
+    subset(., format.Date(INSPECTION.DATE, "%y") == c("17"))%>%
+    filter(ACTION == 'Violation') %>%
+    arrange(CAMIS) %>%
+    group_by(CAMIS) %>%
+    count(CAMIS) %>%
+    arrange(desc(n)) %>%
+    select(CAMIS) %>%
+    head(.,10) %>%
+    as.matrix() %>%
+    as.vector())
+
+(prj_2_most_violation <- prj %>%
+    filter(CAMIS %in% prj_2_2017_violation_most) %>%
+    select(DBA,BORO,CUISINE.DESCRIPTION) %>%
+    unique(.))
+
+colnames(prj_2_most_violation) <- c('Name','Borough','Cuisine')
+
+
+# least violations in 2017
+(prj_2_2017_violation_least <- prj %>%
+    subset(., format.Date(INSPECTION.DATE, "%y") == c("17"))%>%
+    filter(ACTION == 'Violation') %>%
+    arrange(CAMIS) %>%
+    group_by(CAMIS) %>%
+    count(CAMIS) %>%
+    arrange(n) %>%
+    select(CAMIS) %>%
+    head(.,10) %>%
+    as.matrix() %>%
+    as.vector())
+
+(prj_2_least_violation <- prj %>%
+    filter(CAMIS %in% prj_2_2017_violation_least) %>%
+    select(DBA,BORO,CUISINE.DESCRIPTION) %>%
+    unique(.))
+
+colnames(prj_2_least_violation) <- c('Name','Borough','Cuisine')
+```
+
+The results are tabulated below, with the top ten results for each question. The restaurant with the most inspections in 2017 was 218 Restaurant, a Chinese restaurant in Manhattan. The restaurant with the most violations in 2017 was B Bo Sing Bakery, a bakery in Brooklyn. The restaurant with the least violations in 2017 was Done Peppe, an Italian restaurant in Queens.
+
+It is interesting that the list of the top 10 restaurants for most and least violations include mostly ethnic cuisines, such as Chinese (5 out of 10), Afghan, African, and Latin. However, the top 10 restaurants with the least violations are all either American (8 out of 10) or Italian (2 out of 10)
+
+```{r q2tables, echo =FALSE, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE}
+#most inspections
+ttheme_default(base_size = 3, base_colour = "black", base_family = "Calibri")
+grid.arrange(
+  tableGrob(prj_2_2017_inspection_most[1:10, 1:3]),
+  nrow=1, top="Top 10 Restaurants with Most Inspections")
+
+#most violations
+grid.arrange(
+  tableGrob(prj_2_most_violation[1:10, 1:3]),
+  nrow=1, top="Top 10 Restaurants with Most Violations")
+
+#least violations
+grid.arrange(
+  tableGrob(prj_2_least_violation[1:10, 1:3]),
+  nrow=1, top="Top 10 Restaurants with Least Violations")
+```
+
+
+
+### Association between grade and number of violations
+
+Next, we investigate the following question:
+
+*Is there an association between Grade and number of critical violations?
+
+We run a linear model with the response variable grade, and the explanatory variable number of violations cited. We will accept results as statistically significant at $\alpha = 0.05$.
+
+```{r q3, echo =FALSE, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE, results='hide', fig.keep='all'}
+prj_3 <- prj %>%
+  filter(ACTION == 'Violation') %>%
+  filter(CRITICAL.FLAG == 'Critical') %>%
+  filter(ACTION != "")%>%
+  filter(GRADE != "") %>%
+  filter(GRADE != "Not Yet Graded") %>%
+  filter(GRADE != "Z") %>%
+  group_by(CAMIS) %>%
+  arrange(CAMIS, INSPECTION.DATE) %>%
+  select(CAMIS,DBA,ACTION,GRADE,INSPECTION.DATE)
+
+table(prj_3$GRADE)
+prj_3$GRADE <- droplevels(prj_3$GRADE)
+
+prj_3 <- prj_3 %>%
+  mutate(GRADE = fct_recode(as.character(GRADE),
+                      "3" = "A",
+                      "2" = "B",
+                      "1" = "C"))
+prj_3$GRADE <- as.numeric(prj_3$GRADE)
+str(prj_3$GRADE)
+
+avg <- prj_3 %>%
+  group_by(CAMIS) %>%
+  summarise(mean = mean(GRADE)) %>%
+  as.data.frame()
+ 
+count <- prj_3 %>%
+  group_by(CAMIS) %>%
+  count(.) %>%
+  as.data.frame()
+
+colnames(count)[2] <- 'count'
+
+prj_3_2 <- full_join(count,avg, by = "CAMIS")
+                     
+#Maybe do top 100 restaurants
+
+fit <- lm(mean~count,data = prj_3_2)
+summary(fit)
+
+ggplot(prj_3_2,aes(x=count,y=mean)) +
+  geom_jitter(stat="identity",col='orange') +
+  geom_smooth(method='lm',formula=y~x,col='red') +
+  theme_light()
+```
+
+From the regression model, we predict that for every unit increase in number of critical violations, the average grade will decrease by 0.07 (p<0.05). The R-squared value of 0.2983 means that this model only explains 29.8% of the variation in the data.
+
+
+### Winter vs summer
+
+Next, we investigate whether there are more violations in summer or winter. We exclude the years 2013 and 2017 as complete data is not available for all of the winter and summer months. We use a t-test to calculate whether or not there is a difference in mean number of violations between winter and summer.
+
+```{r q4, echo =FALSE, warning = FALSE, error = FALSE, cache = TRUE, message = FALSE, results='hide', fig.keep='all'}
+q4_summer <- prj %>%
+  mutate(year = format(INSPECTION.DATE, "%Y")) %>%
+  subset(., format.Date(INSPECTION.DATE, "%m") == c("07","08","09")) %>%
+  subset(., format.Date(INSPECTION.DATE, "%Y") == c("2014","2015","2016")) %>%
+  mutate(season = "summer")
+
+summer <- q4_summer %>%
+  group_by(year) %>%
+  count()
+
+q4_winter <- prj %>%
+  mutate(year = format(INSPECTION.DATE, "%Y")) %>%
+  subset(., format.Date(INSPECTION.DATE, "%m") == c("12","01","02")) %>%
+  subset(., format.Date(INSPECTION.DATE, "%Y") == c("2014","2015","2016")) %>%
+  mutate(season = "winter") 
+
+winter <- q4_winter %>%
+  group_by(year) %>%
+  count()
+
+t.test(summer$n,winter$n,paired=TRUE)
+
+summer_plot <- summer %>%
+  mutate(season = 'summer')
+winter_plot <- winter %>%
+  mutate(season = 'winter')
+
+seasons <- rbind(summer_plot,winter_plot)
+
+ggplot(seasons, aes(x=season,y=n,fill=year)) +
+  geom_bar(stat="identity") +
+  facet_wrap(~year,nrow=1)
+```
+The results of the t-test show that we fail to reject the null hypothesis, so we cannot conclude that there is a difference in the number of violations in summer and winter. The bar plot shows that for 2014 and 2016, there were more violations in summer than winter however in 2015 there were more in winter than summer.
+
+
+###Bonus
+
+We investigate the most frequently used words in the violation descriptions. The top results, excluding stop words, are food, flies, surface, properly, ENTER RESULTS.
+
+
+#Conclusions
+
+
+1. Which restaurant had the most inspections?
+  + 218 Restaurant, a Chinese Restaurant in Manhattan
+2. Which restaurant had the most violations?
+  +B Bo Sing Bakery, a bakery in Brooklyn
+3. What are the most used words in the violation descriptions?
+  +Food, properly, flies, contact, vermin, above, surface
+
+We tested the following hypoetheses:
+
+1. There is a difference in the rate of critical violations per inspection between the boroughs.
+  +Using Manhattan as the reference borough, there is a significant difference in the rate of critical violations per inspection for all boroughs except for Queens. On average, Brooklyn and the Bronx had a lower rate of critical violations and Staten Island had a higher rate.
+2. There is an association between a restaurant’s Grade and the number of violations cited for that restaurant.
+  +Yes, there is a negative correlation between the number of violations a restaurant has had and its grade, this result was statistically significant at $\alpha = 0.05$
+3. There is a difference in the number of violations in the Summer and Winter.
+  +After calculating the average number of violations in summer and winter for the full years 2014, 2015 and 2016 we failed to reject the null hypothesis that there is a difference in the mean number of violations in summer and winter.
+
+
+
+
+
+
