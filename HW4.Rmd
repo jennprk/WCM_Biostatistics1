@@ -1,0 +1,1549 @@
+---
+title: "Homework4"
+author: "Ji-Eun(Jenn) Park"
+date: "10/14/2017"
+output: word_document
+---
+
+```{r setup, echo = FALSE, warning = FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(moments)
+set.seed(1)
+```
+
+```{r setup1, echo = FALSE, warning = FALSE, include=FALSE}
+setwd('~/Desktop/Biostatistics/HW')
+dat25 <- read_csv('plco_dat_n25.csv')
+head(dat25)
+```
+
+## Question 1
+
+We would like to estimate a series of statistics from our dataset, and we will use the bootstrap to estimate 95% conﬁdence intervals for each statistic. The statistics of interest are:
+
+• Report estimates and bootstrap confidence intervals in writing.
+
+• Plot your results, showing the sampling distribution from the bootstrapping as well as the point estimate in the same plot.
+
+1-1. Mean of age
+```{r q1-1,echo = FALSE}
+age25 <- dat25$age
+n1 <- length(age25)
+
+# bootstrap mean of age
+bs1 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  mean(x)
+})
+
+mu1 <- mean(age25)
+q1 <- quantile(bs1, c(0.025, 0.975))
+
+mu1
+q1
+
+plot(density(bs1),xaxt = "n",main = "Sampling distribution of bootstrap mean of age\nB = 10000,n = 25",xlab = "bootstrap mean of age")
+abline(v = c(mu1,q1),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu1,labels = mu1, col.axis = "red", las = 1)
+axis(1, at = q1,labels = q1,col.axis = "blue", las = 1)
+legend("topright",c("estimated mean\n of age","95% CI"), cex = 0.7, 
+   col = c("red","blue","white"),lty = 1)
+```
+
+The point estimate of the mean of age is 62.72 years and our estimated 95% confidence interval is from 60.8 to 64.68 years. In other words, we are 95% confident that the true mean is between 60.8 and 64.68.
+
+
+
+
+1-2. Median age
+```{r q1-2,echo = FALSE}
+bs2 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  median(x)
+})
+
+mu2 <- median(age25)
+q2 <- quantile(bs2, c(0.025, 0.975))
+
+mu2 
+q2
+
+plot(density(bs2),xaxt = "n",main = "Sampling distribution of bootstrap median of age\nB = 10000,n = 25",xlab = "bootstrap median of age")
+abline(v = c(mu2,q2),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu2,labels = mu2, col.axis = "red", las=1)
+axis(1, at = q2,labels = q2, col.axis = "blue", las=1)
+legend(x = 63,y = 0.35,c("estimated median\n of age","","95% bootstrap \n confidence interval"), cex = 0.7,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimate of the median age is 62 years and our estimated 95% confidence interval is from 59 to 67 years. In other words, we are 95% confident that the true median of age is between 59 and 67. 
+
+
+
+
+
+1-3. Standard deviation of age
+```{r q1-3,echo = FALSE}
+bs3 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  sd(x)
+})
+
+mu3 <- round(sd(age25),2)
+q3 <- round(quantile(bs3, c(0.025,0.975)),2)
+
+mu3
+q3
+
+plot(density(bs3),xaxt = "n",main = "Sampling distribution of bootstrap standard deviation of age\nB = 10000,n=25",xlab = "bootstrap sd of age")
+abline(v = c(mu3,q3),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu3,labels = mu3, col.axis = "red", las = 1)
+axis(1, at = q3,labels = q3, col.axis = "blue", las = 1)
+legend(x = 5.8,y = 0.8,c("estimate sd of age","","95% CI"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimate of the standard deviation of age to be 5.02 and our estimated 95% confidence interval is from 4.08 to 5.7. In other words, we are 95% confident that the true standard deviation of age is between 4.08 and 5.7. 
+
+
+
+
+
+1-4. 89th percentile of age
+```{r q1-4,echo = FALSE}
+bs4 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  quantile(x,0.89)
+})
+
+mu4 <- quantile(age25,0.89)
+q4 <- round(quantile(bs4,c(0.025,0.975)),2)
+
+mu4
+q4
+
+plot(density(bs4),xaxt = "n",main = "Sampling distribution of 89th percentile of age\nB = 10000,n = 25",xlab = "bootstrap 89 percentile")
+abline(v = c(mu4,q4),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu4,labels = mu4, col.axis = "red", las = 1)
+axis(1, at = q4,labels = q4, col.axis = "blue", las = 1)
+legend(64,5,c("estimate 89th\n percentile of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+```
+
+The point estimate of the 89th percentile of age is 68 years and our estimated 95% confidence interval is from 67.36 to 70.08 years. In other words, we are 95% confident that the true 89th percentile of age is between 67.36 and 70.08 years. 
+
+
+
+
+
+
+1-5. Mean age minus 4 times the standard deviation of age
+```{r q1-5,echo = FALSE}
+bs5 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  mean(x) - 4*sd(x)
+})
+
+mu5 <- round(mean(age25) - 4*sd(age25),2)
+q5 <- round(quantile(bs5,c(0.025,0.975)),2)
+
+mu5
+q5
+
+plot(density(bs5), xaxt = "n",main = "Sampling distribution of bootstrap 'mean - 4sd'\nB = 10000, n = 25",xlab = "bootstrap mean-4sd of age")
+abline(v = c(mu5,q5), col = c("red","blue","blue"), lwd = 2)
+axis(1, at = mu5, labels = mu5, col.axis = "red", las = 1)
+axis(1, at = q5, labels = q5, col.axis = "blue", las = 1)
+legend("topright", c("estimate mean minus\n 4 standard deviation of age","","95% bootstrap\n confidence interval"), cex = 0.6, lty = 1, col = c("red","white","blue"))
+```
+
+The point estimate of the mean age minus 4 times the standard deviation of age to be 42.64 and our estimated 95% confidence interval is from 39.74 to 46.95. In other words, we are 95% confident that the true mean age minus 4 times the standard deviation of age is between 39.74 and 46.95. 
+
+
+
+
+
+
+1-6. Kurtosis of age
+```{r q1-6,echo = FALSE}
+library(moments)
+
+bs6 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  kurtosis(x)
+})
+
+mu6 <- round(kurtosis(age25),2)
+q6 <- round(quantile(bs6,c(0.025,0.975)),2)
+
+mu6
+q6
+
+plot(density(bs6), xaxt = "n", main = "Distribution of bootstrap kurtosis of age\nB = 10000, n = 25", xlab = "bootstrap kurtosis of age")
+abline(v = c(mu6,q6),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu6, labels = mu6, col.axis = "red", las = 1)
+axis(1, at = q6, labels = q6, col.axis = "blue", las = 1)
+legend("topright", c("estimate kurtosis of age","","95% bootstrap\n confidence interval"), cex = 0.7, lty = 1, col = c("red","white","blue"))
+```
+
+The point estimate of the kurtosis of age to be 1.6 and our estimated 95% confidence interval is from 1.29 to 2.54. In other words, we are 95% confident that the true kurtosis of age is between 1.29 and 2.54. 
+
+
+
+
+
+1-7. Skewness of age
+```{r q1-7,echo = FALSE}
+bs7 <- replicate(10000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  skewness(x)
+})
+
+mu7 <- round(skewness(age25),2)
+q7 <- round(quantile(bs7,c(0.025,0.975)),2)
+
+mu7
+q7
+
+plot(density(bs7),xaxt = "n", main = "Sampling distribution of bootstrap skewness of age\nB = 10000,n = 25", xlab = "bootstrap skewness of age")
+abline(v = c(mu7,q7),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu7,labels = mu7, col.axis = "red", las = 1)
+axis(1, at = q7,labels = q7, col.axis = "blue", las = 1)
+legend("topright",c("estimate skewness\n of age","","95% bootstrap\n confidence interval"), cex = 0.6, lty = 1,col = c("red","white","blue"))
+```
+
+The point estimate of the skewness of age to be 0.12 and our estimated 95% confidence interval is from -0.56 to 0.8. In other words, we are 95% confident that the true skewness of age is between -0.56 and 0.8. 
+
+
+
+
+
+1-8&9. Most common and least common race
+```{r q1-8-9,echo = FALSE}
+race25 <- dat25$race7
+
+mu8 <- table(race25)[which.max(table(race25))]
+mu8
+mu9 <- table(race25)[which.min(table(race25))]
+mu9
+
+
+table(race25)
+
+hist(race25,main = "Histogram of races",xlab = "races",breaks = 8)
+abline(v = c(1,7),col = c("red","blue"),lwd = 2)
+axis(1, at = 1,labels = 1, col.axis = "red", las = 1)
+axis(1, at = 7,labels = 7, col.axis = "blue", las = 1)
+legend("top",c("most common race","","least common race"), cex = 0.7, lty = 1,col = c("red","white","blue"))
+```
+
+The estimate of the most common race is race 1 and the least common race is race 7. Here it is meaningless to use the bootstrap and get an estimated confidence interval because bootstrap is used to measure the estimated variability of spread and it does not work for discrete variables. Thus, as race variable is a discrete variable, bootstrap does not work.
+
+
+
+1-10&11. Most common and least common state
+```{r q1-10-11,echo = FALSE}
+state25 <- dat25$state
+
+mu10 <- table(state25)[which.max(table(state25))]
+mu10
+
+mu11 <- table(state25)[which.min(table(state25))]
+mu11
+
+table(state25)
+
+
+hist(state25,main = "Histogram of States with most common states",xlab = "States",breaks = 55)
+abline(v = mu10,col = "red",lwd = 2)
+axis(1, at = mu10,labels = mu10, col.axis = "red", las = 1)
+
+
+hist(state25,main = "Histogram of States with least common states",xlab = "States",breaks = 55)
+abline(v = mu11,col = "blue",lwd = 2)
+axis(1, at = mu11,labels = mu11, col.axis = "blue", las = 1)
+```
+
+By coding our sample, we can estimate that state number 36 is the most common state. However, by seeing the table we can figure out that there are three states that are most common: 36 42 49. In addition, we can estimate that state number 9 is the least common state. However, by seeing the table we can figure out that there are even seven states that are least common: 9 16 21 26 37 38 54.
+
+As there are more than one most common state, we cannot say this is a 'point estimate' as it is not a 'single' value to serve the best estimate. The reason why this can happen is because it is a discrete variable. 
+
+In addition, as state variable is a discrete variable, bootstrapping does not make sense. 
+
+
+1-12. Mean PSA at year 0
+```{r q1-12,echo = FALSE}
+psa0_25 <- dat25$psa_level0
+
+bs12 <- replicate(10000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  mean(x,na.rm = TRUE)
+})
+
+mu12 <- round(mean(psa0_25,na.rm =TRUE),2)
+q12 <- round(quantile(bs12, c(0.025, 0.975)),2)
+
+mu12
+q12
+
+plot(density(bs12),xaxt = "n",main = "Sampling Distribution of mean PSA level at year 0\nB=10000,n=25",xlab = "bootstrap mean PSA level")
+abline(v = c(mu12,q12),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu12,labels = mu12, col.axis = "red", las = 1)
+axis(1, at = q12,labels = q12, col.axis = "blue", las = 1)
+legend("topright",c("estimate mean\n PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimate of the the mean PSA at year 0 to be 1.75 and our estimated 95% confidence interval is from 1.21 to 2.34 . In other words, we are 95% confident that the true mean of mean PSA at year 0 is between 1.21 and 2.34.
+
+
+
+
+
+
+1-13. Standard deviation of PSA at year 0
+```{r q1-13,echo = FALSE}
+bs13<- replicate(10000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  sd(x,na.rm=TRUE)
+})
+
+mu13 <- round(sd(psa0_25,na.rm=TRUE),2)
+q13 <- round(quantile(bs13, c(0.025, 0.975)),2)
+
+mu13
+q13
+
+plot(density(bs13),xaxt = "n",main = "Sampling distribution of standard deviation of PSA level at year0\nB = 10000,n = 25",xlab = "bootstrap sd of PSA")
+abline(v = c(mu13,q13),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu13,labels = mu13, col.axis = "red", las = 1)
+axis(1, at = q13,labels = q13, col.axis = "blue", las = 1)
+legend("topright",c("estimate sd\n of PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimate of the the standard deviation of PSA at year 0 to be 1.4 and our 95% confidence interval is from 0.9 to 1.77 In other words, we are 95% confident that the true standard deviation of PSA at year 0 is between 0.9 and 1.77.
+
+
+• How many bootstrap samples did you use? Why did you choose this number?
+
+I used 10,000 bootstrap samples. It is because the bigger the sample number is, the more accurate our estimate gets due to law of large number(LLN). I figured 10,000 is sufficiently big enough but not too big to slow down the R process.
+
+
+• Which variables would you say the bootstrap worked best for? Worst? Why?
+
+It worked best for continuous variables such as variables related to the mean and standard deviation and kurtosis and skewness. The reason is that the sampling distribution of those variables seem to be similar to a Guassian distribution, which shows that CLT and LLN is working well and the estimate is close to the true value.  The worst was for discrete variables: state and race. As mentioned above, bootstrap is used to measure the estimated variability of spread, and it does not work for discrete variables.
+
+
+## Question 2
+
+Repeat question 1 (including written and graphical results) with:
+1) Half as many bootstrap samples  
+2) Twice as many bootstrap samples. 
+
+
+
+2-1. Mean of age
+```{r q2-1,echo=FALSE}
+# 5000 bootstraps
+bs1_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  mean(x)
+})
+
+mu1_2 <- mean(age25)
+q1_2 <- quantile(bs1_2, c(0.025,0.975))
+
+mu1_2
+q1_2
+
+plot(density(bs1_2),xaxt = "n", main = "Sampling distribution of bootstrap mean of age\nB = 5000,n = 25", xlab = "Sampling mean of age")
+abline(v = c(mu1_2, q1_2),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu1_2,labels = mu1_2, col.axis = "red", las = 1)
+axis(1, at = q1_2,labels = q1_2, col.axis = "blue", las = 1)
+legend("topright",c("estimate mean of age","95% bootstrap \n confidence interval"), cex = 0.6, 
+   col = c("red","blue"),lty = 1)
+
+# 20000 bootstraps
+bs1_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  mean(x)
+})
+
+mu1_3 <- mean(age25)
+q1_3 <- quantile(bs1_3, c(0.025, 0.975))
+
+mu1_3
+q1_3
+
+plot(density(bs1_3),xaxt = "n",main = "Sampling distribution of bootstrap mean of age\nB = 20000,n = 25",xlab = "bootstrap mean of age")
+abline(v = c(mu1_3,q1_3),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu1_3,labels = mu1_3, col.axis = "red", las = 1)
+axis(1, at = q1_3,labels = q1_3, col.axis = "blue", las = 1)
+legend("topright",c("estimate mean of age","95% bootstrap \n confidence interval"), cex = 0.6, 
+   col = c("red","blue"),lty = 1)
+```
+The point estimate of the mean of age is still 62.72 years. The estimated 95% confidence intervals for 5000 bootstraps is from 60.8 to 64.64 years, while for 20000 bootstraps is from 60.8 to 64.64 years.
+
+
+2-2. Median age
+```{r q2-2,echo=FALSE}
+# 5000 bootstraps
+bs2_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  median(x)
+})
+
+mu2_2 <- median(age25)
+q2_2 <- quantile(bs2_2, c(0.025,0.975))
+
+mu2_2
+q2_2
+
+plot(density(bs2_2),xaxt = "n",main = "Sampling distribution of bootstrap median of age\nB = 5000,n = 25",xlab = "bootstrap median of age")
+abline(v = c(mu2_2,q2_2),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu2_2,labels = mu2_2, col.axis = "red", las = 1)
+axis(1, at = q2_2,labels = q2_2, col.axis = "blue", las = 1)
+legend(x = 62.5,y = 0.3,c("estimate median of age","95% bootstrap \n confidence interval"), cex = 0.7,lty = 1,col = c("red","blue"))
+
+# 20000 bootstraps
+bs2_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  median(x)
+})
+
+mu2_3 <- median(age25)
+q2_3 <- quantile(bs2_3, c(0.025,0.975))
+
+mu2_3
+q2_3
+
+
+plot(density(bs2_3),xaxt = "n",main = "Sampling distribution of bootstrap median of age\nB = 20000,n = 25",xlab = "bootstrap median of age")
+abline(v = c(mu2_3,q2_3),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu2_3,labels = mu2_3, col.axis = "red", las = 1)
+axis(1, at = q2_3,labels = q2_3, col.axis = "blue", las = 1)
+legend(x = 63,y = 0.4,c("estimate median of age","95% bootstrap \n confidence interval"), cex = 0.7,lty = 1,col = c("red","blue"))
+```
+The point estimate of the median of age is still 62 years. The estimated 95% confidence intervals for 5000 and 20000 bootstraps are both remains the same as question 1: from 59 to 67 years.
+
+2-3. Standard deviation of age
+```{r q2-3,echo=FALSE}
+# 5000 bootstraps
+bs3_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  sd(x)
+})
+
+mu3_2 <- round(sd(age25),2)
+q3_2 <- round(quantile(bs3_2, c(0.025,0.975)),2)
+
+mu3_2
+q3_2
+
+plot(density(bs3_2),xaxt = "n",main = "Sampling distribution of bootstrap standard deviation of age\nB = 5000,n = 25",xlab = "bootstrap sd age")
+abline(v = c(mu3_2,q3_2),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu3_2,labels = mu3_2, col.axis = "red", las = 1)
+axis(1, at = q3_2,labels = q3_2, col.axis = "blue", las = 1)
+legend("topleft",c("estimate standard \n deviation of age","","95% bootstrap \n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs3_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  sd(x)
+})
+
+mu3_3 <- round(sd(age25),2)
+q3_3 <- round(quantile(bs3_3, c(0.025,0.975)),2)
+
+mu3_3
+q3_3
+
+plot(density(bs3_3),xaxt="n",main="Sampling distribution of bootstrap standard deviation of age\nB=20000,n=25",xlab="bootstrap sd of age")
+abline(v=c(mu3_3,q3_3),col=c("red","blue","blue"),lwd=2)
+axis(1, at=mu3_3,labels=mu3_3, col.axis="red", las=1)
+axis(1, at=q3_3,labels=q3_3, col.axis="blue", las=1)
+legend("topleft",c("estimate standard \n deviation of age","","95% bootstrap \n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+```
+The point estimate of the standard deviation of age is still 5.02 years. The estimated 95% confidence intervals for 5000 bootstraps is from 4.09 to 5.7 years, while for 20000 bootstraps is from 4.1 to 5.7 years.
+
+
+2-4. 89th percentile of age
+```{r q2-4,echo=FALSE}
+# 5000 bootstraps
+bs4_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  quantile(x,0.89)
+})
+
+mu4_2 <- quantile(age25,0.89)
+q4_2 <- round(quantile(bs4_2,c(0.025,0.975)),2)
+
+mu4_2
+q4_2
+
+plot(density(bs4),xaxt="n",main="Sampling distribution of 89th percentile of age\nB=5000,n=25",xlab="bootstrap 89th percentile")
+abline(v=c(mu4_2,q4_2),col=c("red","blue","blue"),lwd=2)
+axis(1, at=mu4_2,labels=mu4_2, col.axis="red", las=1)
+axis(1, at=q4_2,labels=q4_2, col.axis="blue", las=1)
+legend("topleft",c("estimate 89th\n percentile of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs4_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  quantile(x,0.89)
+})
+
+mu4_3 <- quantile(age25,0.89)
+q4_3 <- round(quantile(bs4_3,c(0.025,0.975)),2)
+
+mu4_3
+q4_3
+
+plot(density(bs4_3),xaxt="n",main="Sampling distribution of 89th percentile of age\nB=20000,n=25",xlab="bootstrap 89th percentile")
+abline(v=c(mu4_3,q4_3),col=c("red","blue","blue"),lwd=2)
+axis(1, at=mu4_3,labels=mu4_3, col.axis="red", las=1)
+axis(1, at=q4_3,labels=q4_3, col.axis="blue", las=1)
+legend("topleft",c("estimate 89th\n percentile of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+```
+The point estimate of the 89th percentile of age is still 68 years. The estimated 95% confidence intervals for both 5000 and 20000 bootstraps are the same: from 67.36 to 70.08 years.
+
+2-5. Mean age minus 4 times the standard deviation of age
+```{r q2-5,echo=FALSE}
+# 5000 bootstraps
+bs5_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace = TRUE)
+  mean(x) - 4*sd(x)
+})
+
+mu5_2 <- round(mean(age25) - 4*sd(age25),2)
+q5_2 <- round(quantile(bs5_2,c(0.025,0.975)),2)
+
+mu5_2
+q5_2
+
+plot(density(bs5_2), xaxt="n",main = "Sampling distribution of bootstrap 'mean - 4sd'\nB=5000,n=25",xlab = "bootstrap mean - 4sd of age")
+abline(v = c(mu5_2,q5_2), col = c("red","blue","blue"), lwd = 2)
+axis(1, at = mu5_2, labels = mu5_2, col.axis = "red", las = 1)
+axis(1, at = q5_2, labels = q5_2, col.axis = "blue", las = 1)
+legend("topright",c("estimate mean minus\n 4 standard deviation of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs5_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  mean(x) - 4*sd(x)
+})
+
+mu5_3 <- round(mean(age25)-4*sd(age25),2)
+q5_3 <- round(quantile(bs5_3,c(0.025,0.975)),2)
+
+mu5_3
+q5_3
+
+plot(density(bs5_3), xaxt="n",main="Sampling distribution of bootstrap 'mean - 4sd'\nB=20000,n=25",xlab="bootstrap mean - 4sd of age")
+abline(v=c(mu5_3,q5_3), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu5_3, labels=mu5_3, col.axis="red", las=1)
+axis(1, at=q5_3, labels=q5_3, col.axis="blue", las=1)
+legend("topright", c("estimate mean minus\n 4 standard deviation of age","","95% bootstrap\n confidence interval"), cex=0.6, lty=1, col = c("red","white","blue"))
+```
+The point estimate of the mean age minus 4 times the standard deviation of age is still 42.64 years. The estimated 95% confidence intervals for 5000 bootstraps is from 39.75 to 46.87 years, while for 20000 bootstraps is from 39.74 to 46.7 years.
+
+
+
+2-6. Kurtosis of age
+```{r q2-6, echo=FALSE}
+# 5000 bootstraps
+bs6_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  kurtosis(x)
+})
+
+mu6_2 <- round(kurtosis(age25),2)
+q6_2 <- round(quantile(bs6_2,c(0.025,0.975)),2)
+mu6_2
+q6_2
+
+plot(density(bs6_2), xaxt="n", main="Sampling distribution of bootstrap kurtosis of age\nB=5000,n=25", xlab="bootstrap kurtosis of age")
+abline(v=c(mu6_2,q6_2), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu6_2,labels=mu6_2, col.axis="red", las=1)
+axis(1, at=q6_2,labels=q6_2, col.axis="blue", las=1)
+legend("topright", c("estimate kurtosis of age","","95% bootstrap\n confidence interval"), cex=0.7, lty=1, col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs6_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  kurtosis(x)
+})
+
+mu6_3 <- round(kurtosis(age25),2)
+q6_3 <- round(quantile(bs6_3,c(0.025,0.975)),2)
+
+mu6_3
+q6_3
+
+plot(density(bs6_3), xaxt="n", main="Sampling distribution of bootstrap kurtosis of age\nB=20000,n=25", xlab="bootstrap kurtosis of age")
+abline(v=c(mu6_2,q6_2), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu6_2, labels=mu6_2, col.axis="red", las=1)
+axis(1, at=q6_2, labels=q6_2, col.axis="blue", las=1)
+legend("topright",c("estimate kurtosis of age","","95% bootstrap\n confidence interval"), cex=0.7, lty=1, col = c("red","white","blue"))
+```
+We estimate the kurtosis of age to be 1.6.The estimated 95% confidence intervals for both 5000 and 20000 bootstraps are the same: from 1.28 and 2.49. 
+
+2-7. Skewness of age
+```{r q2-7,echo=FALSE}
+# 5000 bootstraps
+bs7_2 <- replicate(5000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  skewness(x)
+})
+
+mu7_2 <- round(skewness(age25),2)
+q7_2 <- round(quantile(bs7_2,c(0.025,0.975)),2)
+
+mu7_2
+q7_2
+
+plot(density(bs7_2), xaxt="n", main="Sampling distribution of bootstrap skewness of age\nB=5000,n=25", xlab="bootstrap skewness of age")
+abline(v=c(mu7_2,q7_2),col=c("red","blue","blue"),lwd=2)
+axis(1, at=mu7_2,labels=mu7_2, col.axis="red", las=1)
+axis(1, at=q7_2,labels=q7_2, col.axis="blue", las=1)
+legend("topright",c("estimate skewness\n of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs7_3 <- replicate(20000, {
+  x <- sample(age25, size = n1, replace=TRUE)
+  skewness(x)
+})
+
+mu7_3 <- round(skewness(age25),2)
+q7_3 <- round(quantile(bs7_3,c(0.025,0.975)),2)
+
+mu7_3
+q7_3
+
+plot(density(bs7_3),xaxt="n",main="Sampling distribution of bootstrap skewness of age\nB=20000,n=25",xlab="bootstrap skewness of age")
+abline(v=c(mu7_3,q7_3),col=c("red","blue","blue"),lwd=2)
+axis(1, at=mu7_3,labels=mu7_3, col.axis="red", las=1)
+axis(1, at=q7_3,labels=q7_3, col.axis="blue", las=1)
+legend("topright",c("estimate skewness\n of age","","95% bootstrap\n confidence interval"), cex=0.6,lty=1,col = c("red","white","blue"))
+```
+
+The point estimate of the skewness of age to be 0.124. The estimated 95% confidence intervals for 5000 bootstraps is from -0.55 to 0.79, while for 20000 bootstraps is from -0.56 to 0.82.
+
+
+2-8&9. Most common & Least common race
+```{r q2-8-9,echo=FALSE}
+race25 <- dat25$race7
+
+mu8 <- table(race25)[which.max(table(race25))]
+mu8
+mu9 <- table(race25)[which.min(table(race25))]
+mu9
+
+
+table(race25)
+
+hist(race25,main = "Histogram of races",xlab = "races",breaks = 8)
+abline(v = c(1,7),col = c("red","blue"),lwd = 2)
+axis(1, at = 1,labels = 1, col.axis = "red", las = 1)
+axis(1, at = 7,labels = 7, col.axis = "blue", las = 1)
+legend("top",c("most common race","","least common race"), cex = 0.7, lty = 1,col = c("red","white","blue"))
+```
+The estimate of the most common race is race 1 and the least common race is race 7. Here it is meaningless to use the bootstrap and get an estimated confidence interval because bootstrap is used to measure the estimated variability of spread and it does not work for discrete variables. Thus, as race variable is a discrete variable, bootstrap does not work.
+
+2-10&11. Most common & Least common state
+```{r q2-10-11,echo=FALSE}
+state25 <- dat25$state
+
+mu10 <- table(state25)[which.max(table(state25))]
+mu10
+
+mu11 <- table(state25)[which.min(table(state25))]
+mu11
+
+table(state25)
+
+
+hist(state25,xaxt = "n",main = "Histogram of States with most common states",xlab = "States",breaks = 55)
+abline(v = mu10,col = "red",lwd = 2)
+axis(1, at = mu10,labels = mu10, col.axis = "red", las = 1)
+
+
+hist(state25,xaxt = "n",main = "Histogram of States with least common states",xlab = "States",breaks = 55)
+abline(v = mu11,col = "blue",lwd = 2)
+axis(1, at = mu11,labels = mu11, col.axis = "blue", las = 1)
+```
+By coding our sample we can estimate that state number 36 is the most common state. However, by seeing the table we can figure out that there are three states that are most common: 36 42 49. In addition, we can estimate that state number 9 is the least common state. However, by seeing the table we can figure out that there are even seven states that are least common: 9 16 21 26 37 38 54.
+
+As there are more than one most common state, we cannot say this is a 'point estimate' as it is not a 'single' value to serve the best estimate. The reason why this can happen is because it is a discrete variable. 
+
+In addition, as state variable is a discrete variable, bootstrapping does not make sense. 
+
+
+2-12. Mean PSA at year 0
+```{r q2-12,echo=FALSE}
+psa0_25 <- dat25$psa_level0
+
+# 5000 bootstraps
+bs12_2 <- replicate(5000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  mean(x,na.rm = TRUE)
+})
+
+mu12_2 <- round(mean(psa0_25,na.rm =TRUE),2)
+q12_2 <- round(quantile(bs12_2, c(0.025,0.975)),2)
+
+mu12_2
+q12_2
+
+plot(density(bs12_2), xaxt="n", main="Sampling distribution of mean PSA level at year 0\nB=5000,n=25", xlab="bootstrap mean PSA level at year 0")
+abline(v=c(mu12_2,q12_2), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu12_2, labels=mu12_2, col.axis="red", las=1)
+axis(1, at=q12_2, labels=q12_2, col.axis="blue", las=1)
+legend("topright", c("estimate mean\n PSA level at year0","","95% bootstrap\n confidence interval"), cex=0.6, lty=1, col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs12_3 <- replicate(20000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  mean(x,na.rm = TRUE)
+})
+
+mu12_3 <- round(mean(psa0_25,na.rm =TRUE),2)
+q12_3 <- round(quantile(bs12_3, c(0.025,0.975)),2)
+
+mu12_3
+q12_3
+
+plot(density(bs12_3), xaxt="n", main="Sampling Distribution of mean PSA level at year 0\nB=20000,n=25", xlab="bootstrap mean PSA level at year 0")
+abline(v=c(mu12_3,q12_3), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu12_3, labels=mu12_3, col.axis="red", las=1)
+axis(1, at=q12_3, labels=q12_3, col.axis="blue", las=1)
+legend("topright", c("estimate mean\n PSA level at year0","","95% bootstrap\n confidence interval"), cex=0.6, lty=1, col = c("red","white","blue"))
+```
+
+The point estimate of the mean PSA at year 0 to be 1.75. The estimated 95% confidence intervals for 5000 bootstraps is from 1.21 to 2.35, while for 20000 bootstraps is from 1.21 to 2.34.
+
+
+
+2-13. Standard deviation of PSA at year 0
+```{r q2-13,echo=FALSE}
+# 5000 bootstraps
+bs13_2<- replicate(5000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  sd(x,na.rm=TRUE)
+})
+
+mu13_2 <- round(sd(psa0_25, na.rm=TRUE),2)
+q13_2 <- round(quantile(bs13_2, c(0.025,0.975)),2)
+
+mu13_2
+q13_2
+
+plot(density(bs13_2), xaxt="n", main="Sampling distribution of standard deviation of PSA level at year0\nB=5000,n=25", xlab="bootstrap sd of PSA level at year 0")
+abline(v=c(mu13_2,q13_2), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu13_2, labels=mu13_2, col.axis="red", las=1)
+axis(1, at=q13_2, labels=q13_2, col.axis="blue", las=1)
+legend("topright",c("estimate sd\n of PSA level at year0","","95% bootstrap\n confidence interval"), cex=0.6, lty=1, col = c("red","white","blue"))
+
+# 20000 bootstraps
+bs13_3 <- replicate(20000, {
+  x <- sample(psa0_25, size = n1, replace=TRUE)
+  sd(x,na.rm=TRUE)
+})
+
+mu13_3 <- round(sd(psa0_25, na.rm=TRUE),2)
+q13_3 <- round(quantile(bs13_3, c(0.025,0.975)),2)
+
+mu13_3
+q13_3
+
+plot(density(bs13_3), xaxt="n", main="Sampling distribution of standard deviation of PSA level at year0\nB=20000,n=25", xlab="bootstrap sd of PSA level at year 0")
+abline(v=c(mu13_3,q13_3), col=c("red","blue","blue"), lwd=2)
+axis(1, at=mu13_3, labels=mu13_3, col.axis="red", las=1)
+axis(1, at=q13_3, labels=q13_3, col.axis="blue", las=1)
+legend("topright", c("estimate sd\n of PSA level at year0","","95% bootstrap\n confidence interval"), cex=0.6, lty=1, col = c("red","white","blue"))
+
+```
+The point estimate of the standard deviation of PSA at year 0 is still 1.4. The estimated 95% confidence intervals for 5000 bootstraps is from 0.88 to 1.78, while for 20000 bootstraps is from 0.9 to 1.77.
+
+
+• What can you conclude about the impact of changing the number of bootstrap samples?
+
+There were no impact on the point estimate because it is based on the original sample, not the bootstrap samples. However, the confidence intervals changed due to change in number of bootstrap samples. Hoever, there were no big impact as all three numbers of bootstraps were sufficiently large that there were only subtle change in the interval.
+
+• Does it aﬀect all estimates equally?
+
+The change in bootstrap size did not affect all estimates equally. Although I expected that if the number of bootstrap samples get bigger the confidence interval will become narrower, the affect was only shown in some of the values. It did change the intervals by a similar amount. In addition, some variables remained unchanged, such as the median age and 89th percentile of age.
+
+## Question 3
+
+```{r setup2, echo=FALSE, include=FALSE}
+dat100 <- read_csv('plco_dat_n100.csv')
+dat1000 <- read_csv('plco_dat_n1000.csv')
+```
+
+
+Repeat question 1 (including written and graphical results) with larger initial datasets: 
+
+1) N = 100 using plco_dat_n100.csv, 2) N = 1000 using plco_dat_n1000.csv
+
+(For this question choose a single appropriate number of bootstrap samples B of your liking). 
+
+
+3-1. Mean of age
+```{r q3-1, echo=FALSE}
+# with 100 samples
+age100 <- dat100$age
+n2 <- length(age100)
+
+bs1_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace=TRUE)
+  mean(x)
+})
+
+mu1_4 <- round(mean(age100),2)
+q1_4<- round(quantile(bs1_4, c(0.025, 0.975)),2)
+
+mu1_4
+q1_4
+
+plot(density(bs1_4),xaxt="n",main="Sampling distribution of bootstrap mean of age\nB=10000,n=100",xlab="bootstrap mean of age,n=100")
+abline(v=c(mu1_4,q1_4),col = c("red","blue","blue"),lwd=2)
+axis(1, at=mu1_4,labels=mu1_4, col.axis="red", las=1)
+axis(1, at=q1_4,labels=q1_4, col.axis="blue", las=1)
+legend("topright",c("estimate mean of age","95% bootstrap \n confidence interval"), cex=0.6, 
+   col=c("red","blue"),lty = 1)
+
+
+# with 1000 samples
+age1000 <- dat1000$age
+n3 <- length(age1000)
+
+bs1_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace=TRUE)
+  mean(x)
+})
+
+mu1_5 <- round(mean(age1000),2)
+q1_5 <- round(quantile(bs1_5, c(0.025, 0.975)),2)
+
+mu1_5
+q1_5
+
+plot(density(bs1_5),xaxt="n",main="Sampling distribution of bootstrap mean of age\nB=10000,n=1000",xlab="bootstrap mean of age,n=1000")
+abline(v=c(mu1_5,q1_5),col = c("red","blue","blue"),lwd=2)
+axis(1, at=mu1_5,labels=mu1_5, col.axis="red", las=1)
+axis(1, at=q1_5,labels=q1_5, col.axis="blue", las=1)
+legend("topright",c("estimate mean of age","95% bootstrap \n confidence interval"), cex=0.6, 
+   col=c("red","blue"),lty = 1)
+```
+
+The point estimates of the mean of age with 100 samples and 1000 samples are 61.96 and 62.63 years respectively. The estimated 95% confidence intervals for 100 samples is from 60.98 to 62.98 years, while for 1000 samples is from 62.3 to 62.95.
+
+
+3-2. Median age
+```{r q3-2,echo=FALSE}
+# with 100 samples
+bs2_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace=TRUE)
+  median(x)
+})
+
+mu2_4 <- median(age100)
+q2_4 <- round(quantile(bs2_4, c(0.025,0.975)),2)
+
+mu2_4
+q2_4
+
+plot(density(bs2_4),xaxt="n",main="Sampling distribution of bootstrap median of age\nB=10000,n=100",xlab="bootstrap median of age,n=100")
+abline(v=c(mu2_4,q2_4),col = c("red","blue","blue"),lwd=2)
+axis(1, at=mu2_4,labels=mu2_4, col.axis="red", las=1)
+axis(1, at=q2_4,labels=q2_4, col.axis="blue", las=1)
+legend("topleft",c("estimate median of age","95% bootstrap \n confidence interval"), cex=0.7,lty=1,col = c("red","blue"))
+
+# with 1000 samples
+bs2_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace=TRUE)
+  median(x)
+})
+
+mu2_5 <- median(age100)
+q2_5 <- round(quantile(bs2_5, c(0.025, 0.975)),2)
+
+mu2_5
+q2_5
+
+plot(density(bs2_5),xaxt = "n",main = "Sampling distribution of bootstrap median of age\nB=10000,n=1000",xlab = "bootstrap median of age,n=1000")
+abline(v = mu2_5,col = "red",lwd = 2)
+abline(v = q2_5,col = "blue",lwd = 2)
+axis(1, at = mu2_5,labels = mu2_5, col.axis = "red", las = 1)
+axis(1, at = q2_5,labels = q2_5, col.axis = "blue", las = 1)
+legend("topleft",c("estimate median\n of age","95% bootstrap \n confidence interval"),cex = 0.7,lty = 1,col = c("red","blue"))
+```
+
+The point estimates of the mean of age with 100 samples and 1000 samples are both 62 years. The estimated 95% confidence intervals for 100 samples is from 60 to 63 years, while for 1000 samples is from 62 to 63 years.
+
+
+3-3. Standard deviation of age
+```{r q3-3,echo=FALSE}
+# with 100 samples
+bs3_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace = TRUE)
+  sd(x)
+})
+
+mu3_4 <- round(sd(age100),2)
+q3_4 <- round(quantile(bs3_4, c(0.025,0.975)),2)
+
+mu3_4
+q3_4
+
+plot(density(bs3_4),xaxt = "n",main = "Sampling distribution of bootstrap standard deviation of age\nB=10000,n=100",xlab = "bootstrap standard deviation,n=100")
+abline(v=c(mu3_4,q3_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu3_4,labels = mu3_4,col.axis = "red",las = 1)
+axis(1,at = q3_4,labels = q3_4,col.axis = "blue",las = 1)
+legend("topleft",c("estimate standard \n deviation of age","","95% bootstrap \n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs3_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace = TRUE)
+  sd(x)
+})
+
+mu3_5 <- round(sd(age1000),2)
+q3_5 <- round(quantile(bs3_5, c(0.025,0.975)),2)
+
+mu3_5
+q3_5
+
+plot(density(bs3_5),xaxt = "n",main = "Sampling distribution of bootstrap standard deviation of age\nB=10000,n=1000",xlab = "bootstrap standard deviation,n=1000")
+abline(v = c(mu3_5,q3_5),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu3_5,labels = mu3_5,col.axis = "red", las=1)
+axis(1,at = q3_5,labels = q3_5,col.axis = "blue", las=1)
+legend("topleft",c("estimate standard \n deviation of age","","95% bootstrap \n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+The point estimates of the mean of age with 100 samples and 1000 samples are 5.15 and 5.28 respectively. The estimated 95% confidence intervals for 100 samples is from 4.59 to 5.65 years, while for 1000 samples is from 5.11 to 5.45.
+
+3-4. 89th percentile of age
+```{r q3-4,echo=FALSE}
+# with 100 samples
+bs4_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace = TRUE)
+  quantile(x,0.89)
+})
+
+mu4_4 <- quantile(age100,0.89)
+q4_4 <- round(quantile(bs4_4,c(0.025,0.975)),2)
+
+mu4_4
+q4_4
+
+
+plot(density(bs4_4),xaxt = "n",main = "Sampling distribution of 89th percentile of age\nB=10000,n=100",xlab = "bootstrap 89th perecentile,n=100")
+abline(v = c(mu4_4,q4_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu4_4,labels = mu4_4,col.axis = "red",las = 1)
+axis(1,at = q4_4,labels = q4_4,col.axis = "blue",las = 1)
+legend("topleft",c("estimate 89th\n percentile of age","","95% bootstrap\n confidence interval"),cex = 0.6,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs4_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace = TRUE)
+  quantile(x,0.89)
+})
+
+mu4_5 <- quantile(age1000,0.89)
+q4_5 <- round(quantile(bs4_5,c(0.025,0.975)),2)
+
+mu4_5
+q4_5
+
+plot(density(bs4_5),xaxt = "n",main = "Sampling distribution of 89th percentile of age\nB=10000,n=1000",xlab = "bootstrap 89th percentile,n=1000")
+abline(v = c(mu4_5,q4_5),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu4_5,labels = mu4_5,col.axis = "red",las = 1)
+axis(1,at = q4_5,labels = q4_5,col.axis = "blue",las = 1)
+legend(69.1,5,c("estimate 89th\n percentile of age","","95% bootstrap\n confidence interval"),cex = 0.6, lty = 1,col = c("red","white","blue"))
+```
+The point estimates of the mean of age with 100 samples and 1000 samples are 61.9696 and 62.63 respectively. The estimated 95% confidence intervals for 100 samples is from 60.98 to 62.98 years, while for 1000 samples is from 62.3 to 62.95.
+
+3-5. Mean age minus 4 times the standard deviation of age
+```{r q3-5,echo=FALSE}
+# with 100 samples
+bs5_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace = TRUE)
+  mean(x) - 4*sd(x)
+})
+
+mu5_4 <- round(mean(age100) - 4*sd(age100),2)
+q5_4 <- round(quantile(bs5_4,c(0.025,0.975)),2)
+
+mu5_4
+q5_4
+
+plot(density(bs5_4), xaxt = "n",main = "Sampling distribution of bootstrap 'mean - 4sd'\nB=10000,n=100",xlab = "bootstrap mean - 4sd of age, n=100")
+abline(v = c(mu5_4,q5_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu5_4,labels = mu5_4,col.axis = "red",las = 1)
+axis(1,at = q5_4,labels = q5_4,col.axis = "blue",las = 1)
+legend("topright",c("estimate mean minus\n 4 standard deviation of age","","95% bootstrap\n confidence interval"),cex = 0.6,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs5_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace = TRUE)
+  mean(x) - 4*sd(x)
+})
+
+mu5_5 <- round(mean(age1000) - 4*sd(age1000),2)
+q5_5 <- round(quantile(bs5_5,c(0.025,0.975)),2)
+
+mu5_5
+q5_5
+
+plot(density(bs5_5), xaxt = "n",main = "Sampling distribution of bootstrap 'mean - 4sd'\nB=10000,n=1000",xlab = "bootstrap mean - 4sd of age, n=1000")
+abline(v = c(mu5_5,q5_5),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu5_5,labels = mu5_5,col.axis = "red",las = 1)
+axis(1,at = q5_5,labels = q5_5,col.axis = "blue",las = 1)
+legend("topright",c("estimate mean minus\n 4 standard deviation\n of age","","95% bootstrap\n confidence interval"),cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+The point estimates of the mean minus 4 times the standard deviation of age with 100 samples and 1000 samples are 41.37 and 41.49 respectively. The estimated 95% confidence intervals for 100 samples is from 39.48 to 43.59 years, while for 1000 samples is from 40.83 to 42.17.
+
+3-6. Kurtosis of age
+```{r q3-6,echo=FALSE}
+# with 100 samples
+bs6_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace = TRUE)
+  kurtosis(x)
+})
+
+mu6_4 <- round(kurtosis(age100),2)
+q6_4 <- round(quantile(bs6_4,c(0.025,0.975)),2)
+
+mu6_4
+q6_4
+
+plot(density(bs6_4),xaxt = "n",main = "Sampling distribution of bootstrap kurtosis of age\nB =10000,n=100",xlab="bootstrap kurtosis of age,n=100")
+abline(v = c(mu6_4,q6_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu6_4,labels = mu6_4,col.axis = "red", las = 1)
+axis(1,at = q6_4,labels = q6_4,col.axis = "blue", las = 1)
+legend("topright",c("estimate kurtosis of age","","95% bootstrap\n confidence interval"),cex = 0.7,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs6_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace = TRUE)
+  kurtosis(x)
+})
+
+mu6_5 <- round(kurtosis(age1000),2)
+q6_5 <- round(quantile(bs6_5,c(0.025,0.975)),2)
+
+mu6_5
+q6_5
+
+plot(density(bs6_5),xaxt = "n",main = "Sampling distribution of bootstrap kurtosis of age\nB=10000,n=1000",xlab = "bootstrap kurtosis of age,n=1000")
+abline(v = c(mu6_5,q6_5),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu6_5,labels = mu6_5, col.axis = "red", las = 1)
+axis(1,at = q6_5,labels = q6_5, col.axis = "blue", las = 1)
+legend("topright",c("estimate kurtosis of age","","95% bootstrap\n confidence interval"),cex = 0.7,lty = 1,col = c("red","white","blue"))
+```
+The point estimates of the mean minus 4 times the standard deviation of age with 100 samples and 1000 samples are 2.08 and 2.11 respectively. The estimated 95% confidence intervals for 100 samples is from 1.77 to 2.52 years, while for 1000 samples is from 2 to 2.24.
+
+3-7. Skewness of age
+```{r q3-7,echo=FALSE}
+# with 100 samples
+bs7_4 <- replicate(10000, {
+  x <- sample(age100, size = n2, replace = TRUE)
+  skewness(x)
+})
+
+mu7_4 <- round(skewness(age100),2)
+q7_4 <- round(quantile(bs7_4,c(0.025,0.975)),2)
+
+mu7_4
+q7_4
+
+plot(density(bs7_4),xaxt = "n",main = "Sampling distribution of bootstrap skewness of age\nB=10000,n=100",xlab = "bootstrap skewness of age,n=100")
+abline(v = c(mu7_4,q7_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu7_4,labels = mu7_4, col.axis = "red", las = 1)
+axis(1,at = q7_4,labels = q7_4, col.axis = "blue", las = 1)
+legend("topright",c("estimate skewness\n of age","","95% bootstrap\n confidence interval"),cex = 0.6,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs7_5 <- replicate(10000, {
+  x <- sample(age1000, size = n3, replace = TRUE)
+  skewness(x)
+})
+
+mu7_5 <- round(skewness(age1000),2)
+q7_5 <- round(quantile(bs7_5,c(0.025,0.975)),2)
+
+mu7_5
+q7_5
+
+plot(density(bs7_5),xaxt = "n",main = "Sampling distribution of bootstrap skewness of age\nB=10000,n=1000",xlab = "bootstrap skewness of age,n=1000")
+abline(v = c(mu7_5,q7_5),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu7_5,labels = mu7_5,col.axis = "red",las = 1)
+axis(1, at = q7_5,labels = q7_5,col.axis = "blue",las = 1)
+legend("topright",c("estimate skewness\n of age","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+The point estimates of the skewness of age with 100 samples and 1000 samples are 0.29 and 0.32 respectively. The estimated 95% confidence intervals for 100 samples is from 0 to 0.57 years, while for 1000 samples is from 0.23 to 0.4.
+
+
+3-8,9. Most common race
+```{r q3-8-9,echo=FALSE}
+race100 <- dat100$race7
+race1000 <- dat1000$race7
+
+table(race100)[which.max(table(race100))]
+table(race1000)[which.max(table(race1000))]
+table(race100)[which.min(table(race100))]
+table(race1000)[which.min(table(race1000))]
+
+table(race100)
+table(race1000)
+
+hist(race1000,main = "Histogram of races,n=1000",xlab = "races",breaks = 8)
+abline(v = c(1,6),col = c("red","blue"),lwd = 2)
+axis(1,at = 1,labels = 1,col.axis = "red",las = 1)
+axis(1,at = 6,labels = 6,col.axis = "blue",las = 1)
+legend("top",c("most common race","","least common race"),cex = 0.7,lty = 1,col = c("red","white","blue"))
+```
+The estimate of the most common race for 100 samples and 1000 samples are both race 1 and the least common race is race 7 and race 6 respectively. Here it is meaningless to use the bootstrap and get an estimated confidence interval because bootstrap is used to measure the estimated variability of spread and it does not work for discrete variables. Thus, as race variable is a discrete variable, bootstrap does not work.
+
+
+3-10,11. Most common state
+```{r q3-10-11,echo=FALSE}
+state100 <- dat100$state
+state1000 <- dat1000$state
+
+table(state100)[which.max(table(state100))]
+table(state1000)[which.max(table(state1000))]
+
+table(state100)[which.min(table(state100))]
+table(state1000)[which.min(table(state1000))]
+
+table(state100)
+table(state1000)
+
+hist(state100,xaxt = "n",main = "Histogram of states, n = 100",xlab = "states")
+abline(v = c(27,1),col = c("red","blue"),lwd = 2)
+axis(1,at = 27,labels = 27,col.axis = "red",las = 1)
+axis(1,at = 1,labels = 1,col.axis = "blue",las = 1)
+legend("topright",c("most common state","least common state"),cex = 0.7,lty = 1,col = c("red","blue"))
+
+hist(state1000,xaxt = "n",main = "Histogram of states, n = 1000",xlab = "states")
+abline(v = c(27,10),col = c("red","blue"),lwd = 2)
+axis(1,at = 27,labels = 27,col.axis = "red",las = 1)
+axis(1,at = 10,labels = 10,col.axis = "blue",las = 1)
+legend("topright",c("most common state","least common state"),cex = 0.7,lty = 1,col = c("red","blue"))
+
+
+```
+By coding our sample we can estimate that state number 27 is the most common state for both samples. We can also see that state 1 and state 10 are the least common states for 100 samples and 1000 samples, respectively. 
+
+However, by seeing the table we can figure out that there are several states that are least common for both samples. 
+
+As there are more than one least common state, we cannot say this is a 'point estimate' as it is not a 'single' value to serve the best estimate. The reason why this can happen is because it is a discrete variable. 
+
+In addition, as state variable is a discrete variable, bootstrapping does not make sense. 
+
+
+3-12. Mean PSA at year 0
+```{r q3-12,echo=FALSE}
+psa0_100 <- dat100$psa_level0
+psa0_1000 <- dat1000$psa_level0
+
+# with 100 samples
+bs12_4 <- replicate(10000, {
+  x <- sample(psa0_100, size = n2, replace = TRUE)
+  mean(x,na.rm = TRUE)
+})
+
+mu12_4 <- round(mean(psa0_100,na.rm = TRUE),2)
+q12_4 <- round(quantile(bs12_4, c(0.025, 0.975)),2)
+
+mu12_4
+q12_4
+
+plot(density(bs12_4),xaxt="n",main="Sampling Distribution of mean PSA level at year 0\nB=10000, n=100",xlab="bootstrap mean PSA level at year 0,n=100")
+abline(v = c(mu12_4,q12_4),col = c("red","blue","blue"),lwd = 2)
+axis(1,at = mu12_4,labels = mu12_4,col.axis = "red",las = 1)
+axis(1,at = q12_4,labels = q12_4,col.axis = "blue",las = 1)
+legend("topright",c("estimate mean\n PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+ 
+# with 1000 samples
+bs12_5 <- replicate(10000, {
+  x <- sample(psa0_1000, size = n3, replace = TRUE)
+  mean(x,na.rm = TRUE)
+})
+
+mu12_5 <- round(mean(psa0_1000,na.rm = TRUE),2)
+q12_5 <- round(quantile(bs12_5, c(0.025, 0.975)),2)
+
+mu12_5
+q12_5
+
+plot(density(bs12_5),xaxt = "n",main = "Sampling Distribution of mean PSA level at year 0\nB = 10000, n = 100",xlab = "bootstrap mean PSA level at year 0,n = 1000")
+abline(v = c(mu12_5,q12_4),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu12_5, labels = mu12_5, col.axis = "red", las = 1)
+axis(1, at = q12_5, labels = q12_5, col.axis = "blue", las = 1)
+legend(2.21,2.5,c("estimate mean\n PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimates of the mean of PSA level 0 with 100 samples and 1000 samples are 2.16 and 1.88 respectively. The estimated 95% confidence intervals for 100 samples is from 1.71 to 2.66, while for 1000 samples is from 1.63 to 2.21.
+
+3-13. Standard deviation of PSA at year 0
+```{r q3-13,echo=FALSE}
+# with 100 samples
+bs13_4 <- replicate(10000, {
+  x <- sample(psa0_100, size = n2, replace = TRUE)
+  sd(x,na.rm = TRUE)
+})
+
+mu13_4 <- round(sd(psa0_100,na.rm=TRUE),2)
+q13_4 <- round(quantile(bs13_4, c(0.025, 0.975)),2)
+
+mu13_4
+q13_4
+
+plot(density(bs13_4),xaxt = "n",main = "Sampling distribution of standard deviation of PSA level at year0\nB = 10000, n = 100",xlab = "bootstrap sd of PSA, n = 100")
+abline(v = c(mu13_4,q13_4),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu13_4,labels = mu13_4, col.axis = "red", las = 1)
+axis(1, at = q13_4,labels = q13_4, col.axis = "blue", las = 1)
+legend("topright",c("estimate sd\n of PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+
+# with 1000 samples
+bs13_5 <- replicate(10000, {
+  x <- sample(psa0_1000, size = n3, replace = TRUE)
+  sd(x,na.rm = TRUE)
+})
+
+mu13_5 <- round(sd(psa0_1000,na.rm=TRUE),2)
+q13_5 <- round(quantile(bs13_5, c(0.025, 0.975)),2)
+
+mu13_5
+q13_5
+
+plot(density(bs13_5),xaxt = "n",main = "Sampling distribution of standard deviation of PSA level at year0\nB = 10000, n = 1000",xlab = "bootstrap sd of PSA, n = 1000")
+abline(v = c(mu13_5,q13_5),col = c("red","blue","blue"),lwd = 2)
+axis(1, at = mu13_5,labels = mu13_5, col.axis = "red", las = 1)
+axis(1, at = q13_5,labels = q13_5, col.axis="blue", las = 1)
+legend("topright",c("estimate sd\n of PSA level at year0","","95% bootstrap\n confidence interval"), cex = 0.6,lty = 1,col = c("red","white","blue"))
+```
+
+The point estimates of the standard deviation of PSA at year 0 with 100 samples and 1000 samples are 2.32 and 4.52 respectively. The estimated 95% confidence intervals for 100 samples is from 1.73 to 2.81, while for 1000 samples is from 1.7 to 6.85.
+
+
+• What can you conclude about the impact of changing the size of the original dataset? Does it aﬀect all estimates equally?
+
+As the size of the data set increases, the point estimate of all variables have changed. Also, the range of confidence interval of all continuous variables have decreased as the size of the data set increases. It does not affect all the estimates equally as some estimates remain the same such as median of age.
+
+
+## Question 4
+
+Assume that the dataset plco_dat_n10000.csv contains the true complete distribution of the data. Calculate the true point value of each statistic. For each statistic comment on the relation between the true value and the conﬁdence interval found in Question 1 and 3.
+
+```{r setup3, echo=FALSE,include=FALSE}
+setwd('~/Desktop/Biostatistics/HW')
+dat6 <- read.csv('plco_dat_n10000.csv')
+```
+
+```{r setup4,echo=FALSE}
+age_true <- dat6$age
+race_true <- dat6$race7
+state_true <- dat6$state
+psa0_true <- dat6$psa_level0
+```
+
+4-1.Mean age
+```{r q4-1,echo=FALSE}
+round(mean(age_true),2)
+q1
+q1_4
+q1_5
+```
+The true value of the mean of age is 62.72. The true value does not lie with in the confidence interval of 25 samples but does lie within the confidence interval of 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, but the 1000 sample estimates the best, which in other words the range of CI is smaller.
+
+
+4-2.Median age
+```{r q4-2,echo=FALSE}
+median(age_true)
+q2
+q2_4
+q2_5
+```
+The true value of the median of age is 62. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better, which in other words the range of CI is smaller, as the sample size increases.
+
+
+4-3.Standard deviation of age
+```{r q4-3,echo=FALSE}
+round(sd(age_true),2)
+q3
+q3_4
+q3_5
+```
+The true value of the standard deviation of age is 5.35. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better,which in other words the range of CI is smaller, as the sample size increases.
+
+4-4.89th percentile of age
+```{r q4-4,echo=FALSE}
+quantile(age_true,0.89)
+q4
+q4_4
+q4_5
+```
+The true value of the 89th percentile of age is 70. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better,which in other words the range of CI is smaller, as the sample size increases.
+
+
+4-5.Mean age minus 4 times the standard deviation of age
+```{r q4-5,echo=FALSE}
+round(mean(age_true) - 4*sd(age_true),2)
+q5
+q5_4
+q5_5
+```
+The true value of the mean age minus 4 times the standard deviation of age is 41.33. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better,which in other words the range of CI is smaller, as the sample size increases.
+
+4-6. Kurtosis of age
+```{r q4-6,echo=FALSE}
+round(kurtosis(age_true),2)
+q6
+q6_4
+q6_5
+```
+The true value of the kurtosis of age is 2.06. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better,which in other words the range of CI is smaller, as the sample size increases.
+
+
+4-7. Skewness of age
+```{r q4-7,echo=FALSE}
+round(skewness(age_true),2)
+q7
+q7_4
+q7_5
+```
+The true value of the skewness of age is 0.3. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better, which in other words the range of CI is smaller, as the sample size increases.
+
+
+4-8 & 9. Most common race
+```{r q4-8-9,echo=FALSE}
+table(race_true)[which.max(table(race_true))]
+table(race_true)[which.min(table(race_true))]
+```
+
+4-10 & 11. Most common state
+```{r q4-10-11,echo=FALSE}
+table(state_true)[which.max(table(state_true))]
+table(state_true)[which.min(table(state_true))]
+```
+
+4-12. Mean PSA at year 0
+```{r q4-12, echo=FALSE}
+round(mean(psa0_true,na.rm = TRUE),2)
+q12
+q12_4
+q12_5
+```
+The true value of the mean PSA at year 0 is 1.96. The true value lies within all the confidence interval of 25, 100 and 1000 samples. Furthermore, although the confidence levels for all samples are the same as 95%, the estimate gets better, which in other words the range of CI is smaller, as the sample size increases.
+
+
+4-13. Standard deviation of PSA at year 0
+```{r q4-13, echo=FALSE}
+round(sd(psa0_true,na.rm = TRUE),2)
+q13
+q13_4
+q13_5
+```
+The true value of the standard deviation of PSA at year 0 is 8.55. The true value lies does not lie within any confidence interval of 25, 100 and 1000 samples. However, the estimate gets better as the sample size increases, as the confidence interval gets closer to the true value.
+
+
+
+
+## Appendix
+### Setup code
+```{r appendix00, ref.label='setup', eval= FALSE}
+```
+
+### Question 1-Setup code
+```{r appendix01, ref.label='setup1', eval= FALSE}
+```
+
+### Question 1-1 code
+```{r appendix1, ref.label='q1-1', eval = FALSE}
+```
+
+### Question 1-2 code
+```{r appendix2, ref.label='q1-2', eval = FALSE}
+```
+
+### Question 1-3 code
+```{r appendix3, ref.label='q1-3', eval = FALSE}
+```
+
+### Question 1-4 code
+```{r appendix4, ref.label='q1-4', eval = FALSE}
+```
+
+### Question 1-5 code
+```{r appendix5, ref.label='q1-5', eval = FALSE}
+```
+
+### Question 1-6 code
+```{r appendix6, ref.label='q1-6', eval = FALSE}
+```
+
+### Question 1-7 code
+```{r appendix7, ref.label='q1-7', eval = FALSE}
+```
+
+### Question 1-8 & 9 code
+```{r appendix8, ref.label='q1-8-9', eval = FALSE}
+```
+
+### Question 1-10 & 11 code
+```{r appendix10, ref.label='q1-10-11', eval = FALSE}
+```
+
+### Question 1-12 code
+```{r appendix12, ref.label='q1-12', eval = FALSE}
+```
+
+### Question 1-13 code
+```{r appendix13, ref.label='q1-13', eval = FALSE}
+```
+
+### Question 2-1 code
+```{r appendix14, ref.label='q2-1', eval = FALSE}
+```
+
+### Question 2-2 code
+```{r appendix15, ref.label='q2-2', eval = FALSE}
+```
+
+### Question 2-3 code
+```{r appendix16, ref.label='q2-3', eval = FALSE}
+```
+
+### Question 2-4 code
+```{r appendix17, ref.label='q2-4', eval = FALSE}
+```
+
+### Question 2-5 code
+```{r appendix18, ref.label='q2-5', eval = FALSE}
+```
+
+### Question 2-6 code
+```{r appendix19, ref.label='q2-6', eval = FALSE}
+```
+
+### Question 2-7 code
+```{r appendix20, ref.label='q2-7', eval = FALSE}
+```
+
+### Question 2-8 & 9 code
+```{r appendix21, ref.label='q2-8-9', eval = FALSE}
+```
+
+### Question 2-10 & 11 code
+```{r appendix23, ref.label='q2-10-11', eval = FALSE}
+```
+
+### Question 2-12 code
+```{r appendix25, ref.label='q2-12', eval = FALSE}
+```
+
+### Question 2-13 code
+```{r appendix26, ref.label='q2-13', eval = FALSE}
+```
+
+### Question 3-Setup code
+```{r appendix03, ref.label='setup2', eval= FALSE}
+```
+
+### Question 3-1 code
+```{r appendix27, ref.label='q3-1', eval = FALSE}
+```
+
+### Question 3-2 code
+```{r appendix28, ref.label='q3-2', eval = FALSE}
+```
+
+### Question 3-3 code
+```{r appendix29, ref.label='q3-3', eval = FALSE}
+```
+
+### Question 3-4 code
+```{r appendix30, ref.label='q3-4', eval = FALSE}
+```
+
+### Question 3-5 code
+```{r appendix31, ref.label='q3-5', eval = FALSE}
+```
+
+### Question 3-6 code
+```{r appendix32, ref.label='q3-6', eval = FALSE}
+```
+
+### Question 3-7 code
+```{r appendix33, ref.label='q3-7', eval = FALSE}
+```
+
+### Question 3-8 & 9 code
+```{r appendix34, ref.label='q3-8-9', eval = FALSE}
+```
+
+### Question 3-10 & 11 code
+```{r appendix36, ref.label='q3-10-11', eval = FALSE}
+```
+
+### Question 3-12 code
+```{r appendix38, ref.label='q3-12', eval = FALSE}
+```
+
+### Question 3-13 code
+```{r appendix39, ref.label='q3-13', eval = FALSE}
+```
+
+### Question 4 setup3 code
+```{r appendix40, ref.label='setup3', eval = FALSE}
+```
+
+### Question 4 setup4 code
+```{r appendix41, ref.label='setup4', eval = FALSE}
+```
+
+### Question 4-1 code
+```{r appendix42, ref.label='q4-1', eval = FALSE}
+```
+
+### Question 4-2 code
+```{r appendix42, ref.label='q4-2', eval = FALSE}
+```
+
+### Question 4-3 code
+```{r appendix42, ref.label='q4-3', eval = FALSE}
+```
+
+### Question 4-4 code
+```{r appendix42, ref.label='q4-4', eval = FALSE}
+```
+
+### Question 4-5 code
+```{r appendix42, ref.label='q4-5', eval = FALSE}
+```
+
+### Question 4-6 code
+```{r appendix42, ref.label='q4-6', eval = FALSE}
+```
+
+### Question 4-7 code
+```{r appendix42, ref.label='q4-7', eval = FALSE}
+```
+
+### Question 4-8 & 9 code
+```{r appendix42, ref.label='q4-8-9', eval = FALSE}
+```
+
+### Question 4-10 & 11 code
+```{r appendix42, ref.label='q4-10-11', eval = FALSE}
+```
+
+### Question 4-12 code
+```{r appendix42, ref.label='q4-12', eval = FALSE}
+```
+
+### Question 4-13 code
+```{r appendix42, ref.label='q4-13', eval = FALSE}
+```
